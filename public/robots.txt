@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# 禁止爬取API路径
+Disallow: /api/
+Disallow: /_/
+
+# 允许爬取静态资源
+Allow: /favicon.ico
+Allow: /assets/

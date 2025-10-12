@@ -1,0 +1,50 @@
+{
+	"name": "cf-worker-template",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"engines": {
+		"node": "^20.19.0 || >=22.12.0"
+	},
+	"scripts": {
+		"dev": "vite",
+		"build": "run-p type-check \"build-only {@}\" --",
+		"preview": "pnpm run build && wrangler dev",
+		"build-only": "vite build",
+		"type-check": "vue-tsc --build",
+		"deploy": "pnpm run build && wrangler deploy",
+		"cf-typegen": "wrangler types"
+	},
+	"main": "app/main.ts",
+	"dependencies": {
+		"@ameinhardt/unocss-preset-daisy": "^1.1.8",
+		"@cloudflare/vite-plugin": "^1.13.12",
+		"@unocss/reset": "^66.5.3",
+		"@vue/tsconfig": "^0.8.1",
+		"@vueuse/core": "catalog:frontend",
+		"daisyui": "catalog:frontend",
+		"hono": "^4.9.10",
+		"pinia": "catalog:frontend",
+		"pinia-plugin-persistedstate": "^4.5.0",
+		"vue": "catalog:frontend",
+		"vue-router": "catalog:frontend"
+	},
+	"devDependencies": {
+		"@tsconfig/node22": "^22.0.2",
+		"@types/node": "catalog:types",
+		"@vitejs/plugin-vue": "catalog:build",
+		"npm-run-all2": "^8.0.4",
+		"typescript": "catalog:dev",
+		"unocss": "catalog:build",
+		"unplugin-auto-import": "catalog:build",
+		"unplugin-icons": "catalog:build",
+		"unplugin-vue-components": "catalog:build",
+		"vite": "catalog:build",
+		"vue-tsc": "^3.1.1",
+		"wrangler": "^4.42.2"
+	},
+	"resolutions": {
+		"unplugin": "catalog:build",
+		"vite": "catalog:build"
+	}
+}
