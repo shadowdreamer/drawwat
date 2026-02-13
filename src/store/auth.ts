@@ -13,6 +13,7 @@ export interface User {
 export const useAuthStore = defineStore('auth', () => {
   // ========== State ==========
   const token = ref<string>('')
+  const refreshToken = ref<string>('')
   const user = ref<User | null>(null)
 
   // ========== Computed ==========
@@ -27,35 +28,22 @@ export const useAuthStore = defineStore('auth', () => {
     return Array.from(array, (b) => b.toString(16).padStart(2, '0')).join('')
   }
 
-  // Redirect to OAuth authorization page
-  function toAuthPage(provider: 'github' | 'google' = 'github') {
-    const configs = {
-      github: {
-        authUrl: 'https://github.com/login/oauth/authorize',
-        clientId: import.meta.env.VITE_GITHUB_CLIENT_ID || '',
-      },
-      google: {
-        authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
-        clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
-      }
-    }
-
-    const config = configs[provider]
-    const redirectUri = import.meta.env.VITE_OAUTH_REDIRECT_URI || `${window.location.origin}/auth/callback`
+  // Redirect to Bangumi OAuth authorization page
+  function toAuthPage() {
+    const clientId = import.meta.env.VITE_BGM_CLIENT_ID
+    const redirectUri = import.meta.env.VITE_BGM_REDIRECT_URI || `${window.location.origin}/auth/callback`
 
     const params = new URLSearchParams({
-      client_id: config.clientId,
+      client_id: clientId,
       response_type: 'code',
       redirect_uri: redirectUri,
-      scope: provider === 'github' ? 'read:user user:email' : 'openid profile email',
       state: generateRandomState()
     })
 
     // Save state to sessionStorage for verification
     sessionStorage.setItem('oauth_state', params.get('state')!)
-    sessionStorage.setItem('oauth_provider', provider)
 
-    window.location.href = `${config.authUrl}?${params.toString()}`
+    window.location.href = `https://bgm.tv/oauth/authorize?${params.toString()}`
   }
 
   // Exchange authorization code for access token
@@ -85,6 +73,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (data.access_token) {
         token.value = data.access_token
+        refreshToken.value = data.refresh_token
         user.value = data.user
         return true
       }
@@ -92,6 +81,39 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (error) {
       console.error('Failed to get token:', error)
       throw error
+    }
+  }
+
+  // Refresh access token
+  async function refreshAccessToken(): Promise<boolean> {
+    if (!refreshToken.value) return false
+
+    try {
+      const res = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ refresh_token: refreshToken.value })
+      })
+
+      if (!res.ok) {
+        logout()
+        return false
+      }
+
+      const data = await res.json()
+
+      if (data.access_token) {
+        token.value = data.access_token
+        refreshToken.value = data.refresh_token
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Failed to refresh token:', error)
+      logout()
+      return false
     }
   }
 
@@ -124,6 +146,7 @@ export const useAuthStore = defineStore('auth', () => {
   // Logout
   function logout() {
     token.value = ''
+    refreshToken.value = ''
     user.value = null
   }
 
@@ -144,17 +167,19 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     // State
     token,
+    refreshToken,
     user,
     isLoggedIn,
 
     // Actions
     toAuthPage,
     getToken,
+    refreshAccessToken,
     logout
   }
 }, {
   persist: {
     key: 'drawwat-auth',
-    pick: ['token', 'user']
+    pick: ['token', 'refreshToken', 'user']
   }
 })

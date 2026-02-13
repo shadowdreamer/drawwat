@@ -1,32 +1,35 @@
 # 用户鉴权系统技术文档
-## OAuth 2.0 第三方登录实现方案
+## Bangumi OAuth 2.0 登录实现方案
 
-**版本**: v1.0
+**版本**: v2.0
 **创建日期**: 2026-02-13
-**参考项目**: [bgm-grid](https://github.com/shadowdreamer/bgm-grid)
+**更新日期**: 2026-02-13
+**参考**: [Bangumi OAuth 文档](./How-to-Auth.md)
 
 ---
 
 ## 1. 概述
 
-本文档描述 DrawWat 项目的第三方用户鉴权系统设计，采用 **OAuth 2.0 授权码模式** 实现用户登录功能。
+本文档描述 DrawWat 项目的用户鉴权系统设计，采用 **Bangumi OAuth 2.0 授权码模式** 实现用户登录功能。
 
 ### 1.1 设计目标
-- 支持第三方 OAuth 登录（GitHub、Google 等）
-- 前端状态持久化
-- 安全的 Token 管理
+- 使用 Bangumi OAuth 2.0 进行用户身份验证
+- 前端状态持久化（Pinia + localStorage）
+- 安全的 Token 管理（Access Token + Refresh Token）
 - 无缝的用户体验
+
+> **完整 OAuth 流程说明请参考**: [How-to-Auth.md](./How-to-Auth.md)
 
 ### 1.2 OAuth 流程图
 
 ```
 ┌─────────┐                ┌──────────────┐                ┌─────────────┐
-│  用户   │                │ DrawWat App  │                │OAuth Provider│
+│  用户   │                │ DrawWat App  │                │   Bangumi   │
 └────┬────┘                └──────┬───────┘                └──────┬──────┘
      │                            │                               │
      │  1. 点击登录按钮            │                               │
      ├───────────────────────────>│                               │
-     │                            │  2. 重定向到授权页面           │
+     │                            │  2. 重定向到 bgm.tv 授权页面   │
      ├───────────────────────────────────────────────────────────>│
      │                            │                               │
      │  3. 用户授权                │                               │
@@ -44,31 +47,25 @@
      │                            │  7. 返回 access token         │
      │                            │<─────────────────────────────┤
      │                            │                               │
-     │                            │  8. 获取用户信息              │
-     │                            ├─────────────────────────────>│
-     │                            │                               │
-     │                            │  9. 返回用户信息              │
-     │                            │<─────────────────────────────┤
-     │                            │                               │
-     │  10. 登录成功，跳转首页     │                               │
+     │  8. 登录成功，跳转首页     │                               │
      │<───────────────────────────┤                               │
 ```
+
+> **详细 API 说明**: 授权流程和 API 参数请参考 [How-to-Auth.md](./How-to-Auth.md)
 
 ---
 
 ## 2. 技术选型
 
-### 2.1 支持的 OAuth 提供商
-| 提供商 | 优先级 | 说明 |
-|--------|--------|------|
-| **GitHub** | P0 | 开发者友好，API 文档完善 |
-| **Google** | P1 | 用户基数大 |
-| **Discord** | P2 | 游戏社区属性契合 |
+### 2.1 OAuth 提供商
+| 提供商 | 说明 |
+|--------|------|
+| **Bangumi** | 使用 bgm.tv OAuth 2.0 授权码模式进行用户验证 |
 
 ### 2.2 技术栈
 - **前端状态管理**: Pinia + 持久化插件
 - **后端**: Hono (Cloudflare Workers)
-- **Token 存储**: localStorage (前端) + D1 数据库 (可选)
+- **Token 存储**: localStorage (前端)
 
 ---
 
@@ -78,36 +75,21 @@
 
 ```sql
 CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,              -- 用户唯一 ID (UUID)
-    provider TEXT NOT NULL,           -- OAuth 提供商 (github/google/discord)
-    provider_user_id TEXT NOT NULL,   -- 第三方平台的用户 ID
-    username TEXT NOT NULL,           -- 用户名
-    avatar_url TEXT,                  -- 头像 URL
-    email TEXT,                       -- 邮箱（可选）
+    id INTEGER PRIMARY KEY AUTOINCREMENT,  -- 内部用户 ID
+    bgm_user_id INTEGER NOT NULL UNIQUE,    -- Bangumi 用户 ID
+    username TEXT NOT NULL,                 -- 用户名
+    avatar_url TEXT,                        -- 头像 URL
+    email TEXT,                             -- 邮箱（可选）
+    access_token TEXT NOT NULL,             -- Bangumi Access Token
+    refresh_token TEXT,                     -- Bangumi Refresh Token
+    token_expires_at INTEGER,               -- Token 过期时间（Unix 时间戳）
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(provider, provider_user_id)
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 索引
-CREATE INDEX idx_users_provider ON users(provider, provider_user_id);
+CREATE INDEX idx_users_bgm_id ON users(bgm_user_id);
 CREATE INDEX idx_users_created_at ON users(created_at DESC);
-```
-
-### 3.2 OAuth 配置表 (oauth_configs)
-
-```sql
-CREATE TABLE IF NOT EXISTS oauth_configs (
-    provider TEXT PRIMARY KEY,        -- github/google/discord
-    client_id TEXT NOT NULL,
-    client_secret TEXT NOT NULL,
-    redirect_uri TEXT NOT NULL,
-    auth_url TEXT NOT NULL,          -- OAuth 授权 URL
-    token_url TEXT NOT NULL,         -- Token 交换 URL
-    user_info_url TEXT NOT NULL,     -- 用户信息 API URL
-    scopes TEXT NOT NULL,             -- 权限范围 (逗号分隔)
-    enabled BOOLEAN DEFAULT true
-);
 ```
 
 ---
@@ -136,61 +118,23 @@ import { defineStore } from 'pinia'
 export const useAuthStore = defineStore('auth', () => {
   // ========== 状态 ==========
   const token = ref<string>('')
+  const refreshToken = ref<string>('')
   const user = ref<User | null>(null)
 
-  // ========== 获取用户信息 ==========
-  const { data: userData, execute: fetchUserInfo, clear } = useAsyncData(
-    'userInfo',
-    () => $fetch<User>('/api/user/me', {
-      headers: {
-        Authorization: `Bearer ${token.value}`
-      }
-    }),
-    {
-      server: false,          // 仅客户端执行
-      immediate: false        // 手动触发
-    }
-  )
-
-  // 监听 token 变化，自动获取用户信息
-  watch(token, (val) => {
-    if (val) {
-      fetchUserInfo()
-    } else {
-      user.value = null
-      clear()
-    }
-  }, { immediate: true })
-
-  // ========== 跳转 OAuth 授权页面 ==========
-  function toAuthPage(provider: 'github' | 'google' = 'github') {
-    const configs = {
-      github: {
-        authUrl: 'https://github.com/login/oauth/authorize',
-        clientId: 'YOUR_GITHUB_CLIENT_ID',
-        redirectUri: encodeURIComponent(import.meta.env.VITE_OAUTH_REDIRECT_URI)
-      },
-      google: {
-        authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
-        clientId: 'YOUR_GOOGLE_CLIENT_ID',
-        redirectUri: encodeURIComponent(import.meta.env.VITE_OAUTH_REDIRECT_URI)
-      }
-    }
-
-    const config = configs[provider]
-
+  // ========== 跳转 Bangumi 授权页面 ==========
+  function toAuthPage() {
     const params = new URLSearchParams({
-      client_id: config.clientId,
+      client_id: import.meta.env.VITE_BGM_CLIENT_ID,
       response_type: 'code',
-      redirect_uri: import.meta.env.VITE_OAUTH_REDIRECT_URI,
-      scope: provider === 'github' ? 'read:user user:email' : 'openid profile email',
+      redirect_uri: import.meta.env.VITE_BGM_REDIRECT_URI,
       state: generateRandomState() // 防止 CSRF 攻击
     })
 
     // 保存 state 到 sessionStorage 用于验证
     sessionStorage.setItem('oauth_state', params.get('state')!)
 
-    window.location.href = `${config.authUrl}?${params.toString()}`
+    // 跳转到 Bangumi 授权页面
+    window.location.href = `https://bgm.tv/oauth/authorize?${params.toString()}`
   }
 
   // ========== 使用 authorization code 换取 access token ==========
@@ -205,8 +149,10 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const res = await $fetch<{
         access_token: string
+        refresh_token: string
+        expires_in: number
         token_type: string
-        scope?: string
+        user_id: number
       }>('/api/auth', {
         method: 'POST',
         body: { code }
@@ -214,6 +160,9 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (res.access_token) {
         token.value = res.access_token
+        refreshToken.value = res.refresh_token
+        // 获取用户信息
+        await fetchUserInfo()
         return true
       }
       return false
@@ -223,11 +172,52 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // ========== 获取用户信息 ==========
+  async function fetchUserInfo() {
+    try {
+      const userData = await $fetch<User>('/api/user/me', {
+        headers: {
+          Authorization: `Bearer ${token.value}`
+        }
+      })
+      user.value = userData
+    } catch (error) {
+      console.error('Failed to fetch user info:', error)
+    }
+  }
+
+  // ========== 刷新 Token ==========
+  async function refreshAccessToken() {
+    if (!refreshToken.value) return false
+
+    try {
+      const res = await $fetch<{
+        access_token: string
+        refresh_token: string
+        expires_in: number
+      }>('/api/auth/refresh', {
+        method: 'POST',
+        body: { refresh_token: refreshToken.value }
+      })
+
+      if (res.access_token) {
+        token.value = res.access_token
+        refreshToken.value = res.refresh_token
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Failed to refresh token:', error)
+      logout()
+      return false
+    }
+  }
+
   // ========== 登出 ==========
   function logout() {
     token.value = ''
+    refreshToken.value = ''
     user.value = null
-    clear()
     navigateTo('/')
   }
 
@@ -237,28 +227,36 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     // 状态
     token,
+    refreshToken,
     user,
     isLoggedIn,
 
     // 方法
     toAuthPage,
     getToken,
+    fetchUserInfo,
+    refreshAccessToken,
     logout
   }
 }, {
   persist: {
     storage: piniaPluginPersistedstate.localStorage(),
-    pick: ['token', 'user']  // 持久化 token 和 user 信息
+    pick: ['token', 'refreshToken', 'user']  // 持久化 token 和 user 信息
   }
 })
 
 // ========== 类型定义 ==========
 interface User {
-  id: string
-  provider: string
+  id: number
   username: string
   avatar_url?: string
   email?: string
+}
+
+// 生成随机 state 字符串
+function generateRandomState(): string {
+  return Math.random().toString(36).substring(2, 15) +
+         Math.random().toString(36).substring(2, 15)
 }
 ```
 
@@ -376,8 +374,7 @@ onMounted(async () => {
     @click="handleLogin"
     class="btn btn-primary"
   >
-    <i class="i-mdi-github mr-2" />
-    GitHub 登录
+    Bangumi 登录
   </button>
   <div v-else class="dropdown dropdown-end">
     <label tabindex="0" class="btn btn-ghost gap-2">
@@ -398,7 +395,7 @@ onMounted(async () => {
 const authStore = useAuthStore()
 
 function handleLogin() {
-  authStore.toAuthPage('github')
+  authStore.toAuthPage()
 }
 
 function handleLogout() {
@@ -427,6 +424,8 @@ api/
 
 **文件**: `api/routes/auth.ts`
 
+> **Bangumi OAuth API 详情**: 请参考 [How-to-Auth.md](./How-to-Auth.md)
+
 ```typescript
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
@@ -448,22 +447,22 @@ authRoute.post('/auth', zValidator('json', authSchema), async (c) => {
   }
 
   try {
-    // 从环境变量获取 OAuth 配置
-    const CLIENT_ID = c.env.GITHUB_CLIENT_ID
-    const CLIENT_SECRET = c.env.GITHUB_CLIENT_SECRET
-    const REDIRECT_URI = c.env.OAUTH_REDIRECT_URI
+    // 从环境变量获取 Bangumi OAuth 配置
+    const CLIENT_ID = c.env.BGM_APP_ID
+    const CLIENT_SECRET = c.env.BGM_APP_SECRET
+    const REDIRECT_URI = c.env.BGM_REDIRECT_URI
 
-    // 调用 GitHub OAuth API
-    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+    // 调用 Bangumi OAuth API: POST https://bgm.tv/oauth/access_token
+    const tokenResponse = await fetch('https://bgm.tv/oauth/access_token', {
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         client_id: CLIENT_ID,
         client_secret: CLIENT_SECRET,
         code,
+        grant_type: 'authorization_code',
         redirect_uri: REDIRECT_URI
       })
     })
@@ -472,65 +471,69 @@ authRoute.post('/auth', zValidator('json', authSchema), async (c) => {
       throw new Error('Failed to exchange token')
     }
 
-    const tokenData = await tokenResponse.json()
-
-    if (tokenData.error) {
-      return c.json({ error: tokenData.error_description }, 400)
+    const tokenData = await tokenResponse.json() as {
+      access_token: string
+      refresh_token: string
+      expires_in: number
+      token_type: string
+      user_id: number
     }
 
-    // 获取用户信息
-    const userResponse = await fetch('https://api.github.com/user', {
-      headers: {
-        'Authorization': `Bearer ${tokenData.access_token}`
-      }
-    })
-
-    if (!userResponse.ok) {
-      throw new Error('Failed to fetch user info')
+    if (!tokenData.access_token) {
+      return c.json({ error: 'Failed to get access token' }, 400)
     }
-
-    const githubUser = await userResponse.json()
 
     // 查询或创建用户
     const db = c.env.MISC_DB
 
     // 检查用户是否已存在
     const existingUser = await db
-      .prepare('SELECT * FROM users WHERE provider = ? AND provider_user_id = ?')
-      .bind('github', githubUser.id.toString())
+      .prepare('SELECT * FROM users WHERE bgm_user_id = ?')
+      .bind(tokenData.user_id)
       .first()
 
-    let userId: string
+    let userId: number
 
     if (existingUser) {
-      userId = existingUser.id as string
-    } else {
-      // 创建新用户
-      userId = crypto.randomUUID()
+      userId = existingUser.id as number
+      // 更新 token
       await db.prepare(`
-        INSERT INTO users (id, provider, provider_user_id, username, avatar_url, email)
-        VALUES (?, ?, ?, ?, ?, ?)
+        UPDATE users
+        SET access_token = ?, refresh_token = ?, token_expires_at = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
       `).bind(
-        userId,
-        'github',
-        githubUser.id.toString(),
-        githubUser.login,
-        githubUser.avatar_url,
-        githubUser.email
+        tokenData.access_token,
+        tokenData.refresh_token,
+        Math.floor(Date.now() / 1000) + tokenData.expires_in,
+        userId
       ).run()
+    } else {
+      // 获取用户信息
+      const userInfo = await getBangumiUserInfo(tokenData.access_token)
+
+      // 创建新用户
+      const result = await db.prepare(`
+        INSERT INTO users (bgm_user_id, username, avatar_url, email, access_token, refresh_token, token_expires_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        tokenData.user_id,
+        userInfo.username,
+        userInfo.avatar_url,
+        userInfo.email,
+        tokenData.access_token,
+        tokenData.refresh_token,
+        Math.floor(Date.now() / 1000) + tokenData.expires_in
+      ).run()
+
+      userId = result.meta.last_row_id
     }
 
-    // 返回 access_token (可以是 GitHub 的，也可以自己生成 JWT)
     return c.json({
       access_token: tokenData.access_token,
+      refresh_token: tokenData.refresh_token,
+      expires_in: tokenData.expires_in,
       token_type: tokenData.token_type,
-      user: {
-        id: userId,
-        provider: 'github',
-        username: githubUser.login,
-        avatar_url: githubUser.avatar_url,
-        email: githubUser.email
-      }
+      user_id: tokenData.user_id
     })
 
   } catch (error) {
@@ -538,6 +541,81 @@ authRoute.post('/auth', zValidator('json', authSchema), async (c) => {
     return c.json({ error: 'Authentication failed' }, 500)
   }
 })
+
+// POST /api/auth/refresh - 使用 refresh_token 刷新 access token
+authRoute.post('/auth/refresh', async (c) => {
+  const { refresh_token } = await c.req.json()
+
+  if (!refresh_token) {
+    return c.json({ error: 'Missing refresh token' }, 400)
+  }
+
+  try {
+    const CLIENT_ID = c.env.BGM_APP_ID
+    const CLIENT_SECRET = c.env.BGM_APP_SECRET
+    const REDIRECT_URI = c.env.BGM_REDIRECT_URI
+
+    // 调用 Bangumi OAuth API 刷新 token
+    const tokenResponse = await fetch('https://bgm.tv/oauth/access_token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        refresh_token: refresh_token,
+        grant_type: 'refresh_token',
+        redirect_uri: REDIRECT_URI
+      })
+    })
+
+    if (!tokenResponse.ok) {
+      throw new Error('Failed to refresh token')
+    }
+
+    const tokenData = await tokenResponse.json()
+
+    // 更新数据库中的 token
+    const db = c.env.MISC_DB
+    await db.prepare(`
+      UPDATE users
+      SET access_token = ?, refresh_token = ?, token_expires_at = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE refresh_token = ?
+    `).bind(
+      tokenData.access_token,
+      tokenData.refresh_token,
+      Math.floor(Date.now() / 1000) + tokenData.expires_in,
+      refresh_token
+    ).run()
+
+    return c.json(tokenData)
+
+  } catch (error) {
+    console.error('Token refresh error:', error)
+    return c.json({ error: 'Failed to refresh token' }, 500)
+  }
+})
+
+// 获取 Bangumi 用户信息的辅助函数
+async function getBangumiUserInfo(accessToken: string) {
+  const response = await fetch('https://api.bgm.tv/v0/me', {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    }
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch user info')
+  }
+
+  const data = await response.json()
+  return {
+    username: data.username,
+    avatar_url: data.avatar?.large,
+    email: data.email
+  }
+}
 ```
 
 ### 5.3 用户信息 API
@@ -584,12 +662,19 @@ export const authMiddleware: MiddlewareHandler<{ Bindings: Env }> = async (c, ne
 
   const token = authHeader.substring(7) // 移除 "Bearer " 前缀
 
-  // TODO: 这里应该验证 token（例如验证 JWT）
-  // 暂时简化处理，直接放行
-  // 实际应该从 token 解析出 userId
-  // 或者查数据库验证 token 是否有效
+  // 验证 token 是否在数据库中存在且有效
+  const db = c.env.MISC_DB
+  const user = await db
+    .prepare('SELECT id, bgm_user_id, username FROM users WHERE access_token = ? AND token_expires_at > ?')
+    .bind(token, Math.floor(Date.now() / 1000))
+    .first()
 
-  c.set('userId', 'user_id_from_token')
+  if (!user) {
+    return c.json({ error: 'Invalid or expired token' }, 401)
+  }
+
+  c.set('userId', user.id)
+  c.set('bgmUserId', user.bgm_user_id)
 
   await next()
 }
@@ -607,9 +692,9 @@ import { userRoute } from './routes/user'
 
 type Env = {
   MISC_DB: D1Database
-  GITHUB_CLIENT_ID: string
-  GITHUB_CLIENT_SECRET: string
-  OAUTH_REDIRECT_URI: string
+  BGM_APP_ID: string
+  BGM_APP_SECRET: string
+  BGM_REDIRECT_URI: string
 }
 
 const app = new Hono<{ Bindings: Env }>()
@@ -631,50 +716,50 @@ export default app
 
 ## 6. 环境变量配置
 
-### 6.1 前端环境变量
-
-**文件**: `.env`
+### 6.1 前端环境变量 (.env)
 
 ```bash
-# OAuth 回调地址
-VITE_OAUTH_REDIRECT_URI=http://localhost:5173/auth/callback
+# Bangumi OAuth 配置
+VITE_BGM_CLIENT_ID="bgm1345aaf31ef839bc"
+VITE_BGM_REDIRECT_URI=http://localhost:5173/auth/callback
 ```
 
-**文件**: `.env.production`
+**生产环境** (`.env.production`):
 
 ```bash
-VITE_OAUTH_REDIRECT_URI=https://yourdomain.com/auth/callback
+VITE_BGM_CLIENT_ID="bgm1345aaf31ef839bc"
+VITE_BGM_REDIRECT_URI=https://yourdomain.com/auth/callback
 ```
 
-### 6.2 后端环境变量
-
-**文件**: `wrangler.jsonc`
+### 6.2 后端环境变量 (wrangler.jsonc)
 
 ```json
 {
   "vars": {
-    "GITHUB_CLIENT_ID": "your_github_client_id",
-    "GITHUB_CLIENT_SECRET": "your_github_client_secret",
-    "OAUTH_REDIRECT_URI": "https://yourdomain.com/auth/callback"
+    "BGM_APP_ID": "bgm1345aaf31ef839bc",
+    "BGM_APP_SECRET": "28b67f13d0ce2e3f045442aebd511b81",
+    "BGM_REDIRECT_URI": "https://yourdomain.com/auth/callback"
   }
 }
 ```
 
+> **注意**: `BGM_APP_SECRET` 是敏感信息，请勿提交到代码仓库。建议使用 Cloudflare Secrets 管理敏感数据。
+
 ---
 
-## 7. GitHub OAuth App 配置步骤
+## 7. Bangumi OAuth 配置步骤
 
-### 7.1 创建 OAuth App
-1. 访问 [GitHub Developer Settings](https://github.com/settings/developers)
-2. 点击 "New OAuth App"
+### 7.1 创建 Bangumi 应用
+1. 访问 [Bangumi 开放平台](https://bgm.tv/dev/app)
+2. 创建新应用
 3. 填写配置：
-   - **Application name**: DrawWat
-   - **Homepage URL**: `https://yourdomain.com`
-   - **Authorization callback URL**: `https://yourdomain.com/auth/callback`
-4. 获取 `Client ID` 和 `Client Secret`
+   - **应用名称**: DrawWat
+   - **应用描述**: DrawWat 拼图应用
+   - **回调地址**: `https://yourdomain.com/auth/callback`
+4. 获取 `App ID` 和 `App Secret`
 
 ### 7.2 本地开发配置
-在本地开发时，可以创建多个 OAuth App 或使用同一个，回调 URL 配置为：
+在本地开发时，回调 URL 配置为：
 ```
 http://localhost:5173/auth/callback
 ```
@@ -689,133 +774,23 @@ http://localhost:5173/auth/callback
 
 ### 8.2 Token 安全
 - 使用 HTTPS 传输
-- Token 设置过期时间
-- 实现 Refresh Token 机制（可选）
+- Token 有效期为 7 天（604800 秒）
+- 实现 Refresh Token 机制自动续期
 
 ### 8.3 防止重放攻击
-- Authorization Code 只能使用一次
-- Code 有效期短（通常 10 分钟）
-
-### 8.4 输入验证
-- 验证所有 OAuth 回调参数
-- 验证返回的用户信息
+- Authorization Code 有效期仅为 60 秒
+- Code 只能使用一次
 
 ---
 
-## 9. 扩展：支持多个 OAuth 提供商
-
-### 9.1 抽象 OAuth 服务
-
-**文件**: `api/services/oauth.ts`
-
-```typescript
-interface OAuthConfig {
-  authUrl: string
-  tokenUrl: string
-  userInfoUrl: string
-  clientId: string
-  clientSecret: string
-  redirectUri: string
-  scopes: string[]
-}
-
-interface OAuthProvider {
-  name: string
-  config: OAuthConfig
-  getUserInfo(token: string): Promise<OAuthUserInfo>
-}
-
-interface OAuthUserInfo {
-  id: string
-  username: string
-  avatar_url?: string
-  email?: string
-}
-
-// GitHub Provider
-class GitHubProvider implements OAuthProvider {
-  name = 'github'
-  config: OAuthConfig
-
-  constructor(env: Env) {
-    this.config = {
-      authUrl: 'https://github.com/login/oauth/authorize',
-      tokenUrl: 'https://github.com/login/oauth/access_token',
-      userInfoUrl: 'https://api.github.com/user',
-      clientId: env.GITHUB_CLIENT_ID,
-      clientSecret: env.GITHUB_CLIENT_SECRET,
-      redirectUri: env.OAUTH_REDIRECT_URI,
-      scopes: ['read:user', 'user:email']
-    }
-  }
-
-  async getUserInfo(token: string): Promise<OAuthUserInfo> {
-    const res = await fetch(this.config.userInfoUrl, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    const data = await res.json()
-    return {
-      id: data.id.toString(),
-      username: data.login,
-      avatar_url: data.avatar_url,
-      email: data.email
-    }
-  }
-}
-
-// Google Provider
-class GoogleProvider implements OAuthProvider {
-  name = 'google'
-  config: OAuthConfig
-
-  constructor(env: Env) {
-    this.config = {
-      authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
-      tokenUrl: 'https://oauth2.googleapis.com/token',
-      userInfoUrl: 'https://www.googleapis.com/oauth2/v2/userinfo',
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-      redirectUri: env.OAUTH_REDIRECT_URI,
-      scopes: ['openid', 'profile', 'email']
-    }
-  }
-
-  async getUserInfo(token: string): Promise<OAuthUserInfo> {
-    const res = await fetch(this.config.userInfoUrl, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    const data = await res.json()
-    return {
-      id: data.id,
-      username: data.name,
-      avatar_url: data.picture,
-      email: data.email
-    }
-  }
-}
-
-export function createOAuthProvider(provider: string, env: Env): OAuthProvider {
-  switch (provider) {
-    case 'github':
-      return new GitHubProvider(env)
-    case 'google':
-      return new GoogleProvider(env)
-    default:
-      throw new Error(`Unsupported provider: ${provider}`)
-  }
-}
-```
-
----
-
-## 10. 实施检查清单
+## 9. 实施检查清单
 
 ### 前端
 - [ ] 创建 `src/store/auth.ts` Pinia store
 - [ ] 创建 `src/views/AuthCallbackView.vue` 回调页面
 - [ ] 创建 `src/components/LoginButton.vue` 登录组件
 - [ ] 配置路由守卫（`router/index.ts`）
-- [ ] 配置环境变量
+- [ ] 配置 `.env` 环境变量
 - [ ] 测试登录流程
 
 ### 后端
@@ -824,23 +799,23 @@ export function createOAuthProvider(provider: string, env: Env): OAuthProvider {
 - [ ] 实现用户信息 API（`api/routes/user.ts`）
 - [ ] 实现认证中间件
 - [ ] 配置 `wrangler.jsonc` 环境变量
-- [ ] 在 GitHub 创建 OAuth App
+- [ ] 在 Bangumi 创建应用
 
 ### 测试
 - [ ] 测试完整 OAuth 流程
 - [ ] 测试 Token 持久化
+- [ ] 测试 Token 刷新
 - [ ] 测试路由守卫
 - [ ] 测试登出功能
 - [ ] 测试错误处理
 
 ---
 
-## 11. 参考资料
+## 10. 参考资料
 
-- [GitHub OAuth 文档](https://docs.github.com/en/developers/apps/building-oauth-apps)
-- [Google OAuth 2.0 文档](https://developers.google.com/identity/protocols/oauth2)
+- [Bangumi OAuth 文档](./How-to-Auth.md)
+- [Bangumi API 文档](https://github.com/bangumi/api)
 - [OAuth 2.0 RFC 6749](https://tools.ietf.org/html/rfc6749)
-- 参考项目: [bgm-grid](https://github.com/shadowdreamer/bgm-grid)
 
 ---
 
@@ -849,3 +824,4 @@ export function createOAuthProvider(provider: string, env: Env): OAuthProvider {
 | 版本 | 日期 | 作者 | 变更说明 |
 |------|------|------|----------|
 | v1.0 | 2026-02-13 | Claude | 初稿创建，基于 bgm-grid 项目设计 |
+| v2.0 | 2026-02-13 | Claude | 修改为仅使用 Bangumi OAuth |

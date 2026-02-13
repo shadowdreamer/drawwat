@@ -4,27 +4,24 @@ import { z } from 'zod'
 import type { Env } from '../index'
 import type { Variables } from '../middleware/auth'
 
-// GitHub API response types
-interface GitHubTokenResponse {
+// Bangumi OAuth response types
+interface BgmTokenResponse {
   access_token: string
+  refresh_token: string
+  expires_in: number
   token_type: string
-  scope?: string
-  error?: string
-  error_description?: string
+  user_id: number
 }
 
-interface GitHubUser {
+interface BgmUser {
   id: number
-  login: string
-  avatar_url: string
+  username: string
+  avatar: {
+    large: string
+    medium: string
+    small: string
+  }
   email: string | null
-}
-
-interface GitHubEmail {
-  email: string
-  primary: boolean
-  verified: boolean
-  visibility: string | null
 }
 
 export const authRoute = new Hono<{ Bindings: Env, Variables: Variables }>()
@@ -43,37 +40,37 @@ authRoute.post('/auth', zValidator('json', authSchema), async (c) => {
   }
 
   try {
-    // Exchange code for access token
-    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+    // Exchange code for access token with Bangumi OAuth API
+    const tokenResponse = await fetch('https://bgm.tv/oauth/access_token', {
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        client_id: c.env.GITHUB_CLIENT_ID,
-        client_secret: c.env.GITHUB_CLIENT_SECRET,
-        code
+        client_id: c.env.BGM_APP_ID,
+        client_secret: c.env.BGM_APP_SECRET,
+        code,
+        grant_type: 'authorization_code',
+        redirect_uri: c.env.BGM_REDIRECT_URI
       })
     })
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text()
-      console.error('GitHub token error:', errorText)
+      console.error('Bangumi token error:', errorText)
       throw new Error('Failed to exchange token')
     }
 
-    const tokenData = await tokenResponse.json() as GitHubTokenResponse
+    const tokenData = await tokenResponse.json() as BgmTokenResponse
 
-    if (tokenData.error) {
-      return c.json({ error: tokenData.error_description || tokenData.error }, 400)
+    if (!tokenData.access_token) {
+      return c.json({ error: 'Failed to get access token' }, 400)
     }
 
-    // Get user info from GitHub
-    const userResponse = await fetch('https://api.github.com/user', {
+    // Get user info from Bangumi API
+    const userResponse = await fetch('https://api.bgm.tv/v0/me', {
       headers: {
-        'Authorization': `Bearer ${tokenData.access_token}`,
-        'User-Agent': 'DrawWat'
+        'Authorization': `Bearer ${tokenData.access_token}`
       }
     })
 
@@ -81,30 +78,13 @@ authRoute.post('/auth', zValidator('json', authSchema), async (c) => {
       throw new Error('Failed to fetch user info')
     }
 
-    const githubUser = await userResponse.json() as GitHubUser
-
-    // Get user emails
-    const emailResponse = await fetch('https://api.github.com/user/emails', {
-      headers: {
-        'Authorization': `Bearer ${tokenData.access_token}`,
-        'User-Agent': 'DrawWat'
-      }
-    })
-
-    let email = githubUser.email
-    if (emailResponse.ok) {
-      const emails = await emailResponse.json() as GitHubEmail[]
-      const primaryEmail = emails.find((e: any) => e.primary)
-      if (primaryEmail) {
-        email = primaryEmail.email
-      }
-    }
+    const bgmUser = await userResponse.json() as BgmUser
 
     // Check if user exists
     const db = c.env.MISC_DB
     const existingUser = await db
       .prepare('SELECT * FROM users WHERE provider = ? AND provider_user_id = ?')
-      .bind('github', githubUser.id.toString())
+      .bind('bangumi', bgmUser.id.toString())
       .first()
 
     let userId: string
@@ -112,15 +92,19 @@ authRoute.post('/auth', zValidator('json', authSchema), async (c) => {
 
     if (existingUser) {
       userId = (existingUser as any).id
-      // Update user info
+      // Update user info and tokens
       await db.prepare(`
         UPDATE users
-        SET username = ?, avatar_url = ?, email = ?, updated_at = CURRENT_TIMESTAMP
+        SET username = ?, avatar_url = ?, email = ?, access_token = ?,
+            refresh_token = ?, token_expires_at = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `).bind(
-        githubUser.login,
-        githubUser.avatar_url,
-        email,
+        bgmUser.username,
+        bgmUser.avatar?.large || bgmUser.avatar?.medium,
+        bgmUser.email,
+        tokenData.access_token,
+        tokenData.refresh_token,
+        Math.floor(Date.now() / 1000) + tokenData.expires_in,
         userId
       ).run()
     } else {
@@ -128,27 +112,33 @@ authRoute.post('/auth', zValidator('json', authSchema), async (c) => {
       userId = crypto.randomUUID()
       isNewUser = true
       await db.prepare(`
-        INSERT INTO users (id, provider, provider_user_id, username, avatar_url, email)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO users (id, provider, provider_user_id, username, avatar_url, email,
+                          access_token, refresh_token, token_expires_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         userId,
-        'github',
-        githubUser.id.toString(),
-        githubUser.login,
-        githubUser.avatar_url,
-        email
+        'bangumi',
+        bgmUser.id.toString(),
+        bgmUser.username,
+        bgmUser.avatar?.large || bgmUser.avatar?.medium,
+        bgmUser.email,
+        tokenData.access_token,
+        tokenData.refresh_token,
+        Math.floor(Date.now() / 1000) + tokenData.expires_in
       ).run()
     }
 
     return c.json({
       access_token: tokenData.access_token,
+      refresh_token: tokenData.refresh_token,
+      expires_in: tokenData.expires_in,
       token_type: tokenData.token_type,
       user: {
         id: userId,
-        provider: 'github',
-        username: githubUser.login,
-        avatar_url: githubUser.avatar_url,
-        email,
+        provider: 'bangumi',
+        username: bgmUser.username,
+        avatar_url: bgmUser.avatar?.large || bgmUser.avatar?.medium,
+        email: bgmUser.email,
         is_new_user: isNewUser
       }
     })
@@ -156,5 +146,56 @@ authRoute.post('/auth', zValidator('json', authSchema), async (c) => {
   } catch (error) {
     console.error('OAuth error:', error)
     return c.json({ error: 'Authentication failed' }, 500)
+  }
+})
+
+// POST /api/auth/refresh - Refresh access token using refresh token
+authRoute.post('/auth/refresh', async (c) => {
+  try {
+    const { refresh_token } = await c.req.json()
+
+    if (!refresh_token) {
+      return c.json({ error: 'Missing refresh token' }, 400)
+    }
+
+    // Call Bangumi OAuth API to refresh token
+    const tokenResponse = await fetch('https://bgm.tv/oauth/access_token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        client_id: c.env.BGM_APP_ID,
+        client_secret: c.env.BGM_APP_SECRET,
+        refresh_token: refresh_token,
+        grant_type: 'refresh_token',
+        redirect_uri: c.env.BGM_REDIRECT_URI
+      })
+    })
+
+    if (!tokenResponse.ok) {
+      throw new Error('Failed to refresh token')
+    }
+
+    const tokenData = await tokenResponse.json()
+
+    // Update token in database
+    const db = c.env.MISC_DB
+    await db.prepare(`
+      UPDATE users
+      SET access_token = ?, refresh_token = ?, token_expires_at = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE refresh_token = ?
+    `).bind(
+      tokenData.access_token,
+      tokenData.refresh_token,
+      Math.floor(Date.now() / 1000) + tokenData.expires_in,
+      refresh_token
+    ).run()
+
+    return c.json(tokenData)
+
+  } catch (error) {
+    console.error('Token refresh error:', error)
+    return c.json({ error: 'Failed to refresh token' }, 500)
   }
 })

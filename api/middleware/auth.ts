@@ -15,37 +15,28 @@ export const authMiddleware: MiddlewareHandler<{ Bindings: Env, Variables: Varia
 
   const token = authHeader.substring(7)
 
-  // TODO: Implement proper JWT verification
-  // For now, we'll use a simple approach - verify token with GitHub or use JWT
-  // This is a simplified version that should be enhanced for production
-
   try {
-    // Verify token by calling GitHub API
-    const response = await fetch('https://api.github.com/user', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'User-Agent': 'DrawWat'
-      }
-    })
-
-    if (!response.ok) {
-      return c.json({ error: 'Invalid token' }, 401)
-    }
-
-    const user = await response.json() as { id: number; login: string; avatar_url: string; email: string }
-
-    // Get user ID from database
     const db = c.env.MISC_DB
-    const dbUser = await db
-      .prepare('SELECT id FROM users WHERE provider = ? AND provider_user_id = ?')
-      .bind('github', user.id.toString())
+
+    // Verify token by checking database
+    const user = await db
+      .prepare('SELECT id, provider_user_id, username, token_expires_at FROM users WHERE access_token = ? AND provider = ?')
+      .bind(token, 'bangumi')
       .first()
 
-    if (!dbUser) {
-      return c.json({ error: 'User not found' }, 404)
+    if (!user) {
+      return c.json({ error: 'Invalid or expired token' }, 401)
     }
 
-    c.set('userId', (dbUser as any).id as string)
+    // Check if token is expired
+    const expiresAt = (user as any).token_expires_at as number
+    const currentTime = Math.floor(Date.now() / 1000)
+
+    if (expiresAt && expiresAt < currentTime) {
+      return c.json({ error: 'Token expired' }, 401)
+    }
+
+    c.set('userId', (user as any).id as string)
     c.set('token', token)
 
     await next()

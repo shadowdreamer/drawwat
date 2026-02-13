@@ -17,9 +17,9 @@
 		"enabled": true
 	},
 	"vars": {
-		"GITHUB_CLIENT_ID": "your_github_client_id_here",
-		"GITHUB_CLIENT_SECRET": "your_github_client_secret_here",
-		"OAUTH_REDIRECT_URI": "http://localhost:5173/auth/callback"
+		"BGM_APP_ID": "bgm1345aaf31ef839bc",
+		"BGM_APP_SECRET": "28b67f13d0ce2e3f045442aebd511b81",
+		"BGM_REDIRECT_URI": "http://localhost:5173/auth/callback"
 	},
 	"d1_databases": [
     {

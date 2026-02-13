@@ -6,7 +6,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 function handleLogin() {
-  authStore.toAuthPage('github')
+  authStore.toAuthPage()
 }
 
 function handleLogout() {
@@ -22,8 +22,8 @@ function handleLogout() {
     @click="handleLogin"
     class="btn btn-ghost btn-sm md:btn-md gap-2"
   >
-    <i class="i-mdi-github" />
-    <span class="hidden sm:inline">登录</span>
+    <i class="i-mdi-login" />
+    <span class="hidden sm:inline">Bangumi 登录</span>
   </button>
 
   <!-- Logged in - show user dropdown -->

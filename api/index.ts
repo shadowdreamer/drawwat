@@ -6,9 +6,9 @@ import { puzzleRoute } from "./routes/puzzle";
 
 export type Env = {
   MISC_DB: D1Database;
-  GITHUB_CLIENT_ID: string;
-  GITHUB_CLIENT_SECRET: string;
-  OAUTH_REDIRECT_URI: string;
+  BGM_APP_ID: string;
+  BGM_APP_SECRET: string;
+  BGM_REDIRECT_URI: string;
 }
 
 const app = new Hono<{ Bindings: Env }>();
