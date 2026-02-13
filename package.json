@@ -19,6 +19,7 @@
 	"dependencies": {
 		"@ameinhardt/unocss-preset-daisy": "^1.1.8",
 		"@cloudflare/vite-plugin": "^1.13.12",
+		"@hono/zod-validator": "^0.4.3",
 		"@unocss/reset": "^66.5.3",
 		"@vue/tsconfig": "^0.8.1",
 		"@vueuse/core": "catalog:frontend",
@@ -27,7 +28,8 @@
 		"pinia": "catalog:frontend",
 		"pinia-plugin-persistedstate": "^4.5.0",
 		"vue": "catalog:frontend",
-		"vue-router": "catalog:frontend"
+		"vue-router": "catalog:frontend",
+		"zod": "^3.24.2"
 	},
 	"devDependencies": {
 		"@tsconfig/node22": "^22.0.2",

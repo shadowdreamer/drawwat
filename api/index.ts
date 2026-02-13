@@ -1,8 +1,14 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { authRoute } from "./routes/auth";
+import { userRoute } from "./routes/user";
+import { puzzleRoute } from "./routes/puzzle";
 
-export type Env = { 
+export type Env = {
   MISC_DB: D1Database;
+  GITHUB_CLIENT_ID: string;
+  GITHUB_CLIENT_SECRET: string;
+  OAUTH_REDIRECT_URI: string;
 }
 
 const app = new Hono<{ Bindings: Env }>();
@@ -19,15 +25,10 @@ app.get("/api/health", (c) => {
   return c.json({ status: "healthy" });
 });
 
-// Example API endpoint
-app.get("/api/example", async (c) => {
-  try {
-    const result = await c.env.MISC_DB.prepare("SELECT * FROM example_table").all();
-    return c.json({ success: true, data: result.results });
-  } catch (error) {
-    return c.json({ success: false, error: error.message }, 500);
-  }
-});
+// Mount routes
+app.route("/", authRoute);
+app.route("/", userRoute);
+app.route("/", puzzleRoute);
 
 // 404 handling
 app.notFound((c) => {
@@ -47,4 +48,3 @@ async function handleFetch(req: Request, env: Env, ctx: ExecutionContext) {
 export default {
   fetch: handleFetch,
 } satisfies ExportedHandler<Env>;
-
