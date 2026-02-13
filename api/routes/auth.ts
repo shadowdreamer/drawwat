@@ -70,11 +70,18 @@ authRoute.post('/auth', zValidator('json', authSchema), async (c) => {
     // Get user info from Bangumi API
     const userResponse = await fetch('https://api.bgm.tv/v0/me', {
       headers: {
-        'Authorization': `Bearer ${tokenData.access_token}`
+        'Authorization': `Bearer ${tokenData.access_token}`,
+        'User-Agent': 'DrawWat/1.0 (https://drawwat.com)'
       }
     })
 
     if (!userResponse.ok) {
+      const errorText = await userResponse.text()
+      console.error('Bangumi user API error:', {
+        status: userResponse.status,
+        statusText: userResponse.statusText,
+        body: errorText
+      })
       throw new Error('Failed to fetch user info')
     }
 
@@ -177,7 +184,7 @@ authRoute.post('/auth/refresh', async (c) => {
       throw new Error('Failed to refresh token')
     }
 
-    const tokenData = await tokenResponse.json()
+    const tokenData = await tokenResponse.json() as any
 
     // Update token in database
     const db = c.env.MISC_DB
@@ -186,9 +193,9 @@ authRoute.post('/auth/refresh', async (c) => {
       SET access_token = ?, refresh_token = ?, token_expires_at = ?, updated_at = CURRENT_TIMESTAMP
       WHERE refresh_token = ?
     `).bind(
-      tokenData.access_token,
-      tokenData.refresh_token,
-      Math.floor(Date.now() / 1000) + tokenData.expires_in,
+      tokenData?.access_token,
+      tokenData?.refresh_token,
+      Math.floor(Date.now() / 1000) + tokenData?.expires_in,
       refresh_token
     ).run()
 

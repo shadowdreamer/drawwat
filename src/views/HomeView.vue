@@ -62,7 +62,7 @@ const showLogin = route.query.showLogin === 'true'
             </RouterLink>
             <button
               v-else
-              @click="authStore.toAuthPage('github')"
+              @click="authStore.toAuthPage()"
               class="btn btn-primary btn-lg gap-2"
             >
               <i class="i-mdi-github" />

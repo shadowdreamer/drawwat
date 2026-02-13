@@ -25,10 +25,10 @@ app.get("/api/health", (c) => {
   return c.json({ status: "healthy" });
 });
 
-// Mount routes
-app.route("/", authRoute);
-app.route("/", userRoute);
-app.route("/", puzzleRoute);
+// Mount routes under /api
+app.route("/api", authRoute);
+app.route("/api", userRoute);
+app.route("/api", puzzleRoute);
 
 // 404 handling
 app.notFound((c) => {

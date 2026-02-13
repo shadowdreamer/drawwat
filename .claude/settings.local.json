@@ -3,7 +3,11 @@
     "allow": [
       "Bash(cat:*)",
       "Bash(pnpm install)",
-      "Bash(pnpm type-check:*)"
+      "Bash(pnpm type-check:*)",
+      "Bash(pnpm wrangler d1 migrations apply:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm wrangler dev:*)",
+      "Bash(pnpm build-only:*)"
     ]
   }
 }
