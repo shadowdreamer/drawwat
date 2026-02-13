@@ -62,9 +62,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8 max-w-4xl">
+  <div class="container mx-auto px-6 py-10 max-w-4xl">
     <!-- Header -->
-    <div class="flex items-center gap-2 mb-6">
+    <div class="flex items-center gap-3 mb-10">
       <button class="btn btn-ghost btn-sm btn-circle" @click="router.back()">
         <i class="i-mdi-arrow-left" />
       </button>
@@ -74,7 +74,7 @@ onMounted(() => {
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center min-h-[50vh]">
       <div class="text-center">
-        <div class="loading loading-spinner loading-lg mb-4"></div>
+        <div class="loading loading-spinner loading-lg mb-6"></div>
         <p class="text-base-content/60">加载中...</p>
       </div>
     </div>
@@ -88,26 +88,26 @@ onMounted(() => {
     <!-- Stats content -->
     <div v-else-if="stats">
       <!-- Overview cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <div class="card bg-base-100">
-          <div class="card-body p-6 text-center">
-            <div class="text-sm text-base-content/60 mb-2">总猜测次数</div>
-            <div class="text-3xl font-bold text-primary mb-1">{{ stats.total_guesses }}</div>
+          <div class="card-body p-8 text-center">
+            <div class="text-sm text-base-content/60 mb-3">总猜测次数</div>
+            <div class="text-4xl font-bold text-primary mb-2">{{ stats.total_guesses }}</div>
             <div class="text-xs text-base-content/50">不含过期后猜测</div>
           </div>
         </div>
         <div class="card bg-base-100">
-          <div class="card-body p-6 text-center">
-            <div class="text-sm text-base-content/60 mb-2">正确次数</div>
-            <div class="text-3xl font-bold text-success mb-1">{{ stats.correct_guesses }}</div>
+          <div class="card-body p-8 text-center">
+            <div class="text-sm text-base-content/60 mb-3">正确次数</div>
+            <div class="text-4xl font-bold text-success mb-2">{{ stats.correct_guesses }}</div>
             <div class="text-xs text-base-content/50">正确率 {{ (stats.accuracy_rate * 100).toFixed(1) }}%</div>
           </div>
         </div>
         <div class="card bg-base-100">
-          <div class="card-body p-6 text-center">
-            <div class="text-sm text-base-content/60 mb-2">状态</div>
+          <div class="card-body p-8 text-center">
+            <div class="text-sm text-base-content/60 mb-3">状态</div>
             <div
-              class="text-2xl font-bold mb-1"
+              class="text-3xl font-bold mb-2"
               :class="stats.is_expired ? 'text-warning' : 'text-success'"
             >
               {{ stats.is_expired ? '已过期' : '进行中' }}
@@ -120,17 +120,17 @@ onMounted(() => {
       <!-- Leaderboard -->
       <div v-if="stats.solves && stats.solves.length > 0" class="card bg-base-100">
         <div class="card-body p-0">
-          <div class="px-6 pt-6 pb-4">
+          <div class="px-8 pt-8 pb-6 border-b border-base-300">
             <h2 class="card-title text-lg">成功排行榜</h2>
           </div>
           <div class="overflow-x-auto">
             <table class="table table-zebra">
               <thead>
                 <tr>
-                  <th>排名</th>
-                  <th>用户</th>
-                  <th class="hidden sm:table-cell">猜对时间</th>
-                  <th>用时</th>
+                  <th class="py-4">排名</th>
+                  <th class="py-4">用户</th>
+                  <th class="hidden sm:table-cell py-4">猜对时间</th>
+                  <th class="py-4">用时</th>
                 </tr>
               </thead>
               <tbody>

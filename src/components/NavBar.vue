@@ -7,7 +7,7 @@ const authStore = useAuthStore()
 </script>
 
 <template>
-  <nav class="navbar bg-base-100/95 backdrop-blur-md sticky top-0 z-50">
+  <nav class="navbar bg-base-100/95 backdrop-blur-md sticky top-0 z-50 px-4 sm:px-6">
     <div class="flex-1">
       <RouterLink
         to="/"
@@ -18,7 +18,7 @@ const authStore = useAuthStore()
       </RouterLink>
     </div>
 
-    <div class="flex-none gap-1 sm:gap-2">
+    <div class="flex-none gap-2">
       <RouterLink
         v-if="authStore.isLoggedIn"
         to="/create"

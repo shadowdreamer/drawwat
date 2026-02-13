@@ -4,12 +4,12 @@ import { ref, onMounted } from 'vue'
 </script>
 
 <template>
-  <div class="container mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6">About This Template</h1>
-    
-    <div class="card bg-base-100 shadow-xl mb-6">
-      <div class="card-body">
-        <h2 class="card-title">Tech Stack</h2>
+  <div class="container mx-auto px-6 py-12 max-w-4xl">
+    <h1 class="text-3xl font-bold mb-10 font-display">About This Template</h1>
+
+    <div class="card bg-base-100 shadow-xl mb-10">
+      <div class="card-body p-8">
+        <h2 class="card-title text-lg mb-6">Tech Stack</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="badge badge-primary">Cloudflare Workers</div>
           <div class="badge badge-secondary">Hono</div>
@@ -24,9 +24,9 @@ import { ref, onMounted } from 'vue'
     </div>
 
     <div class="card bg-base-100 shadow-xl">
-      <div class="card-body">
-        <h2 class="card-title">Features</h2>
-        <ul class="list-disc list-inside space-y-2">
+      <div class="card-body p-8">
+        <h2 class="card-title text-lg mb-6">Features</h2>
+        <ul class="list-disc list-inside space-y-3">
           <li>Serverless architecture with Cloudflare Workers</li>
           <li>Modern frontend with Vue 3 and Composition API</li>
           <li>Rapid UI development with UnoCSS and DaisyUI</li>

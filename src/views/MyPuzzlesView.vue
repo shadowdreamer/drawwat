@@ -62,12 +62,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8 max-w-6xl">
+  <div class="container mx-auto px-6 py-12 max-w-6xl">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center justify-between mb-10">
       <div>
         <h1 class="text-2xl sm:text-3xl font-bold font-display">我的谜题</h1>
-        <p class="text-base-content/60 mt-1">管理你创建的所有谜题</p>
+        <p class="text-base-content/60 mt-2">管理你创建的所有谜题</p>
       </div>
       <button class="btn btn-primary gap-2" @click="router.push('/create')">
         <i class="i-mdi-plus" />
@@ -78,7 +78,7 @@ onMounted(() => {
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center min-h-[50vh]">
       <div class="text-center">
-        <div class="loading loading-spinner loading-lg mb-4"></div>
+        <div class="loading loading-spinner loading-lg mb-6"></div>
         <p class="text-base-content/60">加载中...</p>
       </div>
     </div>
@@ -90,12 +90,12 @@ onMounted(() => {
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="puzzles.length === 0" class="text-center py-20">
-      <div class="w-20 h-20 rounded-full bg-base-300/30 flex items-center justify-center mx-auto mb-6">
+    <div v-else-if="puzzles.length === 0" class="text-center py-24">
+      <div class="w-20 h-20 rounded-full bg-base-300/30 flex items-center justify-center mx-auto mb-8">
         <i class="i-mdi-puzzle-outline text-4xl text-base-content/30" />
       </div>
-      <h2 class="text-2xl font-bold mb-2 font-display">还没有谜题</h2>
-      <p class="text-base-content/60 mb-6">创建你的第一个谜题吧！</p>
+      <h2 class="text-2xl font-bold mb-3 font-display">还没有谜题</h2>
+      <p class="text-base-content/60 mb-8">创建你的第一个谜题吧！</p>
       <button class="btn btn-primary btn-lg gap-2" @click="router.push('/create')">
         <i class="i-mdi-plus" />
         创建谜题
@@ -103,34 +103,34 @@ onMounted(() => {
     </div>
 
     <!-- Puzzle list -->
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       <div
         v-for="puzzle in puzzles"
         :key="puzzle.id"
-        class="card bg-base-100 hover:shadow-md transition-shadow"
+        class="card bg-base-100 hover:shadow-lg transition-shadow"
       >
-        <figure class="px-4 pt-4">
+        <figure class="px-5 pt-5">
           <img :src="puzzle.image_url" class="rounded-xl h-48 w-full object-cover" />
         </figure>
         <div class="card-body">
-          <div class="flex items-center justify-between text-sm mb-3">
+          <div class="flex items-center justify-between text-sm mb-4">
             <span class="text-base-content/60">{{ formatDate(puzzle.created_at) }}</span>
             <span v-if="puzzle.expires_at" class="badge badge-ghost text-xs">限时</span>
             <span v-else class="badge badge-ghost text-xs">永久</span>
           </div>
 
-          <div class="flex gap-4 mb-4">
-            <div class="flex-1 bg-base-200 rounded-lg p-3 text-center">
+          <div class="flex gap-4 mb-6">
+            <div class="flex-1 bg-base-200 rounded-lg p-4 text-center">
               <div class="text-2xl font-bold">{{ puzzle.total_guesses || 0 }}</div>
-              <div class="text-xs text-base-content/60">猜测</div>
+              <div class="text-xs text-base-content/60 mt-1">猜测</div>
             </div>
-            <div class="flex-1 bg-base-200 rounded-lg p-3 text-center">
+            <div class="flex-1 bg-base-200 rounded-lg p-4 text-center">
               <div class="text-2xl font-bold text-success">{{ puzzle.correct_guesses || 0 }}</div>
-              <div class="text-xs text-base-content/60">正确</div>
+              <div class="text-xs text-base-content/60 mt-1">正确</div>
             </div>
           </div>
 
-          <div class="card-actions justify-end mt-2">
+          <div class="card-actions justify-end gap-2 mt-2">
             <button class="btn btn-ghost btn-sm" @click="viewPuzzle(puzzle.id)">
               <i class="i-mdi-eye-outline" />
               查看

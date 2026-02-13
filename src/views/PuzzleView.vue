@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '../store/auth'
 
 const route = useRoute()
-const router = useRouter()
 const authStore = useAuthStore()
 
 // Puzzle data
@@ -165,11 +164,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8 max-w-5xl">
+  <div class="container mx-auto px-6 py-10 max-w-6xl">
     <!-- Loading state -->
     <div v-if="loading" class="flex items-center justify-center min-h-[50vh]">
       <div class="text-center">
-        <div class="loading loading-spinner loading-lg mb-4"></div>
+        <div class="loading loading-spinner loading-lg mb-6"></div>
         <p class="text-base-content/60">加载谜题...</p>
       </div>
     </div>
@@ -181,12 +180,12 @@ onMounted(() => {
     </div>
 
     <!-- Puzzle content -->
-    <div v-else-if="puzzle" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div v-else-if="puzzle" class="grid grid-cols-1 xl:grid-cols-3 gap-8">
       <!-- Left column: Image and input -->
-      <div class="lg:col-span-2 space-y-6">
+      <div class="xl:col-span-2 space-y-8">
         <!-- Puzzle image -->
         <div class="card bg-base-100">
-          <figure class="p-4">
+          <figure class="p-6">
             <img
               :src="puzzle.image_url"
               class="rounded-xl w-full max-h-[480px] object-contain"
@@ -221,7 +220,7 @@ onMounted(() => {
           <i class="i-mdi-check-circle text-xl" />
           <div>
             <h3 class="font-semibold">正确答案是：</h3>
-            <div class="text-lg font-mono mt-1">{{ correctAnswer }}</div>
+            <div class="text-lg font-mono mt-2">{{ correctAnswer }}</div>
           </div>
         </div>
 
@@ -235,7 +234,7 @@ onMounted(() => {
 
         <!-- Guess input -->
         <div v-if="!hasSolved || !showAnswer" class="card bg-base-100">
-          <div class="card-body p-6">
+          <div class="card-body p-8">
             <div class="form-control">
               <label class="label">
                 <span class="label-text font-medium">输入你的答案</span>
@@ -249,7 +248,7 @@ onMounted(() => {
                 @keydown="handleKeydown"
               />
             </div>
-            <div class="card-actions justify-end mt-4">
+            <div class="card-actions justify-end mt-6">
               <button
                 class="btn btn-primary btn-lg flex-1 gap-2"
                 :disabled="!guess.trim() || submitting"
@@ -265,9 +264,9 @@ onMounted(() => {
 
         <!-- Last guess result -->
         <div v-if="guessResult && !guessResult.is_correct" class="card bg-base-100 border-l-4 border-primary">
-          <div class="card-body p-5">
-            <p class="text-base font-medium mb-4">{{ guessResult.message }}</p>
-            <div class="flex gap-3 justify-center flex-wrap">
+          <div class="card-body p-6">
+            <p class="text-base font-medium mb-6">{{ guessResult.message }}</p>
+            <div class="flex gap-4 justify-center flex-wrap">
               <div class="badge badge-lg badge-success gap-2 py-3 px-4">
                 <i class="i-mdi-check-circle" />
                 {{ guessResult.hint.correct_chars }} 个字符正确
@@ -282,26 +281,27 @@ onMounted(() => {
       </div>
 
       <!-- Right column: History and Leaderboard -->
-      <div class="space-y-6">
+      <div class="space-y-8">
         <!-- Guess history -->
         <div v-if="guesses.length > 0" class="card bg-base-100">
           <div class="card-body p-0">
-            <div class="px-5 pt-5 pb-3 border-b border-base-300">
+            <div class="px-6 pt-6 pb-4 border-b border-base-300">
               <h2 class="card-title text-lg">猜测历史 ({{ guesses.length }})</h2>
             </div>
             <div class="max-h-[400px] overflow-y-auto">
-              <table class="table table-zebra">
+              <table class="table table-zebra table-sm">
                 <thead class="sticky top-0 bg-base-100">
                   <tr>
-                    <th>猜测</th>
-                    <th class="hidden sm:table-cell">时间</th>
-                    <th>提示</th>
+                    <th class="py-3">猜测</th>
+                    <th class="hidden sm:table-cell py-3">时间</th>
+                    <th class="py-3">提示</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="(g, idx) in guesses" :key="idx" :class="{ 'opacity-50': g.is_after_expiry }">
                     <td class="font-mono font-medium">{{ g.guess_answer }}</td>
                     <td class="hidden sm:table-cell text-sm opacity-70">{{ formatDate(g.guessed_at) }}</td>
+                  >
                     <td>
                       <div v-if="!g.is_correct" class="flex gap-1 flex-wrap">
                         <span v-if="g.correct_chars !== undefined" class="badge badge-success text-xs">
@@ -324,16 +324,16 @@ onMounted(() => {
         <!-- Leaderboard -->
         <div v-if="leaderboard.length > 0" class="card bg-base-100">
           <div class="card-body p-0">
-            <div class="px-5 pt-5 pb-3 border-b border-base-300">
+            <div class="px-6 pt-6 pb-4 border-b border-base-300">
               <h2 class="card-title text-lg">成功排行榜</h2>
             </div>
             <div class="max-h-[300px] overflow-y-auto">
-              <table class="table table-zebra">
+              <table class="table table-zebra table-sm">
                 <thead class="sticky top-0 bg-base-100">
                   <tr>
-                    <th>排名</th>
-                    <th>用户</th>
-                    <th>用时</th>
+                    <th class="py-3">排名</th>
+                    <th class="py-3">用户</th>
+                    <th class="py-3">用时</th>
                   </tr>
                 </thead>
                 <tbody>
