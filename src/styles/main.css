@@ -1,1 +1,158 @@
 @import '@unocss/reset/normalize.css'
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+
+/* Custom theme for refined elegance */
+:root {
+  --font-display: 'Noto Serif SC', Georgia, serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+
+  /* Refined color palette */
+  --h-primary: 220;
+  --s-primary: 15%;
+  --l-primary: 20%;
+
+  /* Enhanced shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.10);
+
+  /* Border radius */
+  --radius-box: 0.75rem;
+  --radius-btn: 0.5rem;
+
+  /* Spacing */
+  --section-gap: 3rem;
+  --card-gap: 1.5rem;
+}
+
+/* Base styles */
+body {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Display typography */
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+/* Improved button styles */
+.btn {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.btn-primary {
+  background-color: hsl(var(--h-primary), var(--s-primary), var(--l-primary));
+  border-color: transparent;
+}
+
+.btn-primary:hover {
+  background-color: hsl(var(--h-primary), var(--s-primary), calc(var(--l-primary) - 5%));
+}
+
+/* Refined card styles */
+.card {
+  border-radius: var(--radius-box);
+  box-shadow: var(--shadow-sm);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* Subtle transitions */
+.card,
+.btn,
+.input,
+.textarea {
+  transition-property: box-shadow, border-color, transform, opacity, background-color;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
+}
+
+/* Navbar refinement */
+.navbar {
+  border-bottom: 1px solid hsl(var(--bc) / 0.08);
+  backdrop-filter: blur(8px);
+}
+
+/* Input refinement */
+.input,
+.textarea {
+  border-radius: var(--radius-btn);
+}
+
+.input:focus,
+.textarea:focus {
+  box-shadow: 0 0 0 3px hsl(var(--h-primary), var(--s-primary), var(--l-primary) / 0.15);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--bc) / 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--bc) / 0.3);
+}
+
+/* Utility classes */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.shadow-elevated {
+  box-shadow: var(--shadow-lg);
+}
+
+.border-subtle {
+  border-color: hsl(var(--bc) / 0.08);
+}
+
+.bg-subtle {
+  background-color: hsl(var(--bc) / 0.03);
+}
+
+/* Loading state refinement */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Focus visible for accessibility */
+*:focus-visible {
+  outline: 2px solid hsl(var(--h-primary), var(--s-primary), var(--l-primary));
+  outline-offset: 2px;
+}

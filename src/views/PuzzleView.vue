@@ -111,7 +111,6 @@ async function submitGuess() {
     const result = await response.json()
     guessResult.value = result
 
-    // Add to guesses list
     guesses.value.unshift({
       guess_answer: trimmedGuess,
       is_correct: result.is_correct,
@@ -121,10 +120,8 @@ async function submitGuess() {
       guessed_at: new Date().toISOString()
     })
 
-    // Clear input
     guess.value = ''
 
-    // If correct, reload leaderboard
     if (result.is_correct) {
       loadPuzzle()
     }
@@ -168,196 +165,199 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8 max-w-4xl">
+  <div class="container mx-auto px-4 py-8 max-w-5xl">
     <!-- Loading state -->
     <div v-if="loading" class="flex items-center justify-center min-h-[50vh]">
       <div class="text-center">
         <div class="loading loading-spinner loading-lg mb-4"></div>
-        <p>加载谜题...</p>
+        <p class="text-base-content/60">加载谜题...</p>
       </div>
     </div>
 
     <!-- Error state -->
     <div v-else-if="error" class="alert alert-error">
-      <i class="i-mdi-alert-circle text-xl" />
+      <i class="i-mdi-alert-circle" />
       <span>{{ error }}</span>
     </div>
 
     <!-- Puzzle content -->
-    <div v-else-if="puzzle">
-      <!-- Puzzle image -->
-      <div class="card bg-base-200 shadow-xl mb-6">
-        <figure class="px-4 pt-4">
-          <img
-            :src="puzzle.image_url"
-            class="rounded-xl w-full max-h-[500px] object-contain"
-            alt="谜题图片"
-          />
-        </figure>
-      </div>
-
-      <!-- Hint -->
-      <div v-if="puzzle.hint" class="alert alert-info mb-6">
-        <i class="i-mdi-lightbulb text-xl" />
-        <span>{{ puzzle.hint }}</span>
-      </div>
-
-      <!-- Expired notice -->
-      <div v-if="isExpired" class="alert alert-warning mb-6">
-        <i class="i-mdi-alert text-xl" />
-        <div>
-          <h3 class="font-bold">此谜题已过期</h3>
-          <div class="text-sm">过期后的猜测不会计入统计</div>
-        </div>
-        <button
-          v-if="!showAnswer"
-          class="btn btn-sm btn-warning"
-          @click="revealAnswer"
-        >
-          查看答案
-        </button>
-      </div>
-
-      <!-- Correct answer revealed -->
-      <div v-if="showAnswer" class="alert alert-success mb-6">
-        <i class="i-mdi-check-circle text-xl" />
-        <div>
-          <h3 class="font-bold">正确答案是：</h3>
-          <div class="text-lg font-mono">{{ correctAnswer }}</div>
-        </div>
-      </div>
-
-      <!-- Success message -->
-      <div v-if="hasSolved && !showAnswer" class="alert alert-success mb-6">
-        <i class="i-mdi-trophy text-xl" />
-        <div>
-          <h3 class="font-bold">恭喜你答对了！</h3>
-          <div class="text-sm">你可以继续猜测，或查看排行榜</div>
-        </div>
-      </div>
-
-      <!-- Guess input (only show if not solved or not revealed) -->
-      <div v-if="!hasSolved || !showAnswer" class="card bg-base-100 shadow-lg mb-6">
-        <div class="card-body">
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text text-lg">输入你的答案</span>
-            </label>
-            <input
-              v-model="guess"
-              type="text"
-              class="input input-bordered input-lg text-center text-2xl tracking-widest"
-              placeholder="输入答案..."
-              :disabled="submitting"
-              @keydown="handleKeydown"
+    <div v-else-if="puzzle" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left column: Image and input -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Puzzle image -->
+        <div class="card bg-base-100">
+          <figure class="p-4">
+            <img
+              :src="puzzle.image_url"
+              class="rounded-xl w-full max-h-[480px] object-contain"
+              alt="谜题图片"
             />
+          </figure>
+        </div>
+
+        <!-- Hint -->
+        <div v-if="puzzle.hint" class="alert alert-info">
+          <i class="i-mdi-lightbulb-on" />
+          <span>{{ puzzle.hint }}</span>
+        </div>
+
+        <!-- Status alerts -->
+        <div v-if="isExpired" class="alert alert-warning">
+          <i class="i-mdi-alert" />
+          <div class="flex-1">
+            <h3 class="font-semibold">此谜题已过期</h3>
+            <div class="text-sm opacity-80">过期后的猜测不会计入统计</div>
           </div>
-          <div class="card-actions justify-end mt-4">
-            <button
-              class="btn btn-primary btn-lg w-full gap-2"
-              :disabled="!guess.trim() || submitting"
-              @click="submitGuess"
-            >
-              <span v-if="submitting" class="loading loading-spinner"></span>
-              <i class="i-mdi-send" />
-              {{ submitting ? '提交中...' : '提交猜测' }}
-            </button>
+          <button
+            v-if="!showAnswer"
+            class="btn btn-sm btn-warning"
+            @click="revealAnswer"
+          >
+            查看答案
+          </button>
+        </div>
+
+        <div v-if="showAnswer" class="alert alert-success">
+          <i class="i-mdi-check-circle text-xl" />
+          <div>
+            <h3 class="font-semibold">正确答案是：</h3>
+            <div class="text-lg font-mono mt-1">{{ correctAnswer }}</div>
+          </div>
+        </div>
+
+        <div v-if="hasSolved && !showAnswer" class="alert alert-success">
+          <i class="i-mdi-trophy text-xl" />
+          <div>
+            <h3 class="font-semibold">恭喜你答对了！</h3>
+            <div class="text-sm opacity-80">你可以继续猜测，或查看排行榜</div>
+          </div>
+        </div>
+
+        <!-- Guess input -->
+        <div v-if="!hasSolved || !showAnswer" class="card bg-base-100">
+          <div class="card-body p-6">
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium">输入你的答案</span>
+              </label>
+              <input
+                v-model="guess"
+                type="text"
+                class="input input-bordered input-lg text-center text-2xl tracking-widest"
+                placeholder="输入答案..."
+                :disabled="submitting"
+                @keydown="handleKeydown"
+              />
+            </div>
+            <div class="card-actions justify-end mt-4">
+              <button
+                class="btn btn-primary btn-lg flex-1 gap-2"
+                :disabled="!guess.trim() || submitting"
+                @click="submitGuess"
+              >
+                <span v-if="submitting" class="loading loading-spinner"></span>
+                <i class="i-mdi-send" />
+                提交猜测
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Last guess result -->
+        <div v-if="guessResult && !guessResult.is_correct" class="card bg-base-100 border-l-4 border-primary">
+          <div class="card-body p-5">
+            <p class="text-base font-medium mb-4">{{ guessResult.message }}</p>
+            <div class="flex gap-3 justify-center flex-wrap">
+              <div class="badge badge-lg badge-success gap-2 py-3 px-4">
+                <i class="i-mdi-check-circle" />
+                {{ guessResult.hint.correct_chars }} 个字符正确
+              </div>
+              <div class="badge badge-lg badge-info gap-2 py-3 px-4">
+                <i class="i-mdi-target" />
+                {{ guessResult.hint.correct_positions }} 个位置正确
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Last guess result -->
-      <div v-if="guessResult && !guessResult.is_correct" class="text-center mb-6">
-        <p class="text-lg mb-4">{{ guessResult.message }}</p>
-        <div class="flex gap-2 justify-center flex-wrap">
-          <div class="badge badge-lg badge-success gap-1">
-            <i class="i-mdi-check-circle" />
-            {{ guessResult.hint.correct_chars }} 个字符正确
-          </div>
-          <div class="badge badge-lg badge-info gap-1">
-            <i class="i-mdi-target" />
-            {{ guessResult.hint.correct_positions }} 个位置正确
-          </div>
-        </div>
-      </div>
-
-      <!-- Guess history -->
-      <div v-if="guesses.length > 0" class="card bg-base-100 shadow-lg mb-6">
-        <div class="card-body">
-          <h2 class="card-title mb-4">
-            <i class="i-mdi-history" />
-            猜测历史 ({{ guesses.length }})
-          </h2>
-          <div class="overflow-x-auto">
-            <table class="table table-zebra">
-              <thead>
-                <tr>
-                  <th>猜测</th>
-                  <th>时间</th>
-                  <th>提示</th>
-                  <th>结果</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="g in guesses" :key="g.id" :class="{ 'opacity-50': g.is_after_expiry }">
-                  <td class="font-mono">{{ g.guess_answer }}</td>
-                  <td class="text-sm opacity-70">{{ formatDate(g.guessed_at) }}</td>
-                  <td v-if="!g.is_correct">
-                    <span v-if="g.correct_chars !== undefined" class="badge badge-success text-xs mr-1">
-                      {{ g.correct_chars }} 字符
-                    </span>
-                    <span v-if="g.correct_positions !== undefined" class="badge badge-info text-xs">
-                      {{ g.correct_positions }} 位置
-                    </span>
-                    <span v-if="g.is_after_expiry" class="badge badge-ghost text-xs ml-1">过期</span>
-                  </td>
-                  <td v-else>
-                    <i class="i-mdi-check-circle text-success text-xl" />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+      <!-- Right column: History and Leaderboard -->
+      <div class="space-y-6">
+        <!-- Guess history -->
+        <div v-if="guesses.length > 0" class="card bg-base-100">
+          <div class="card-body p-0">
+            <div class="px-5 pt-5 pb-3 border-b border-base-300">
+              <h2 class="card-title text-lg">猜测历史 ({{ guesses.length }})</h2>
+            </div>
+            <div class="max-h-[400px] overflow-y-auto">
+              <table class="table table-zebra">
+                <thead class="sticky top-0 bg-base-100">
+                  <tr>
+                    <th>猜测</th>
+                    <th class="hidden sm:table-cell">时间</th>
+                    <th>提示</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(g, idx) in guesses" :key="idx" :class="{ 'opacity-50': g.is_after_expiry }">
+                    <td class="font-mono font-medium">{{ g.guess_answer }}</td>
+                    <td class="hidden sm:table-cell text-sm opacity-70">{{ formatDate(g.guessed_at) }}</td>
+                    <td>
+                      <div v-if="!g.is_correct" class="flex gap-1 flex-wrap">
+                        <span v-if="g.correct_chars !== undefined" class="badge badge-success text-xs">
+                          {{ g.correct_chars }} 字符
+                        </span>
+                        <span v-if="g.correct_positions !== undefined" class="badge badge-info text-xs">
+                          {{ g.correct_positions }} 位置
+                        </span>
+                        <span v-if="g.is_after_expiry" class="badge badge-ghost text-xs">过期</span>
+                      </div>
+                      <i v-else class="i-mdi-check-circle text-success text-lg"></i>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Leaderboard -->
-      <div v-if="leaderboard.length > 0" class="card bg-base-100 shadow-lg mb-6">
-        <div class="card-body">
-          <h2 class="card-title mb-4">
-            <i class="i-mdi-trophy" />
-            成功排行榜
-          </h2>
-          <div class="overflow-x-auto">
-            <table class="table table-zebra">
-              <thead>
-                <tr>
-                  <th>排名</th>
-                  <th>用户</th>
-                  <th>用时</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(entry, index) in leaderboard" :key="entry.user_id">
-                  <td>
-                    <span v-if="index === 0" class="text-2xl">🥇</span>
-                    <span v-else-if="index === 1" class="text-2xl">🥈</span>
-                    <span v-else-if="index === 2" class="text-2xl">🥉</span>
-                    <span v-else class="badge badge-ghost">#{{ index + 1 }}</span>
-                  </td>
-                  <td class="font-semibold">{{ entry.username }}</td>
-                  <td>{{ formatTime(entry.time_to_solve) }}</td>
-                </tr>
-              </tbody>
-            </table>
+        <!-- Leaderboard -->
+        <div v-if="leaderboard.length > 0" class="card bg-base-100">
+          <div class="card-body p-0">
+            <div class="px-5 pt-5 pb-3 border-b border-base-300">
+              <h2 class="card-title text-lg">成功排行榜</h2>
+            </div>
+            <div class="max-h-[300px] overflow-y-auto">
+              <table class="table table-zebra">
+                <thead class="sticky top-0 bg-base-100">
+                  <tr>
+                    <th>排名</th>
+                    <th>用户</th>
+                    <th>用时</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(entry, index) in leaderboard" :key="entry.user_id">
+                    <td>
+                      <span v-if="index === 0" class="text-xl">🥇</span>
+                      <span v-else-if="index === 1" class="text-xl">🥈</span>
+                      <span v-else-if="index === 2" class="text-xl">🥉</span>
+                      <span v-else class="badge badge-ghost text-sm">#{{ index + 1 }}</span>
+                    </td>
+                    <td class="font-semibold">{{ entry.username }}</td>
+                    <td>{{ formatTime(entry.time_to_solve) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- No solves yet -->
-      <div v-else-if="!hasSolved" class="alert alert-ghost">
-        <i class="i-mdi-information text-xl" />
-        <span>还没有人猜出这个谜题，成为第一个吧！</span>
+        <!-- No solves yet -->
+        <div v-else-if="!hasSolved" class="alert alert-ghost text-center">
+          <i class="i-mdi-information" />
+          <span>还没有人猜出这个谜题</span>
+        </div>
       </div>
     </div>
   </div>

@@ -28,7 +28,7 @@ const expiryOptions = [
   { label: '1周', value: 604800 },
   { label: '3天', value: 259200 },
   { label: '1天', value: 86400 },
-  { label: '永不过期', value: 0 }
+  { label: '永久', value: 0 }
 ]
 
 // Computed
@@ -44,13 +44,11 @@ function handleFileSelect(event: Event) {
   const file = target.files?.[0]
   if (!file) return
 
-  // Validate file type
   if (!file.type.startsWith('image/')) {
     error.value = '请选择图片文件'
     return
   }
 
-  // Validate file size (5MB)
   if (file.size > 5 * 1024 * 1024) {
     error.value = '图片大小不能超过 5MB'
     return
@@ -59,7 +57,6 @@ function handleFileSelect(event: Event) {
   imageFile.value = file
   error.value = ''
 
-  // Read file as base64
   const reader = new FileReader()
   reader.onload = (e) => {
     imageData.value = e.target?.result as string
@@ -147,8 +144,6 @@ async function createPuzzle() {
     const data = await response.json()
     shareUrl.value = data.share_url
     showShareModal.value = true
-
-    // Reset form after success
     resetForm()
   } catch (err: unknown) {
     error.value = err instanceof Error ? err.message : '创建失败'
@@ -174,11 +169,12 @@ function closeShareModal() {
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8 max-w-3xl">
-    <h1 class="text-3xl font-bold mb-8 flex items-center gap-2">
-      <i class="i-mdi-plus-circle" />
-      创建新谜题
-    </h1>
+  <div class="container mx-auto px-4 py-8 max-w-2xl">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-2xl sm:text-3xl font-bold font-display mb-2">创建新谜题</h1>
+      <p class="text-base-content/60">上传图片，设置答案，生成分享链接</p>
+    </div>
 
     <!-- Error alert -->
     <div v-if="error" class="alert alert-error mb-6">
@@ -186,79 +182,86 @@ function closeShareModal() {
       <span>{{ error }}</span>
     </div>
 
-    <!-- Image upload section -->
-    <div class="card bg-base-100 shadow-lg mb-6">
-      <div class="card-body">
-        <h2 class="card-title mb-4">1. 上传谜题图片</h2>
+    <!-- Image upload -->
+    <section class="mb-8">
+      <div class="card bg-base-100">
+        <div class="card-body p-6">
+          <h2 class="card-title text-lg mb-4 flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-primary text-primary-content flex items-center justify-center text-sm">1</span>
+            上传图片
+          </h2>
 
-        <div v-if="!previewImage"
-          class="border-2 border-dashed border-base-300 rounded-xl p-12 text-center hover:border-primary cursor-pointer transition-colors"
-          @dragover.prevent="handleDragOver"
-          @drop.prevent="handleDrop"
-          @click="fileInput?.click()"
-        >
-          <i class="i-mdi-cloud-upload text-5xl text-base-content/50 mb-4" />
-          <p class="text-lg mb-2">拖拽图片到这里，或点击上传</p>
-          <p class="text-sm text-base-content/50">支持 JPG、PNG、WEBP（最大 5MB）</p>
-        </div>
-
-        <div v-else class="relative">
-          <img :src="previewImage" class="rounded-xl max-h-96 w-full object-cover" />
-          <button
-            class="btn btn-circle btn-ghost absolute top-2 right-2 bg-base-100/80"
-            @click="clearImage"
+          <div v-if="!previewImage"
+            class="border-2 border-dashed border-base-300 rounded-xl p-12 text-center hover:border-primary cursor-pointer"
+            @dragover.prevent="handleDragOver"
+            @drop.prevent="handleDrop"
+            @click="fileInput?.click()"
           >
-            <i class="i-mdi-close" />
-          </button>
-        </div>
+            <i class="i-mdi-cloud-upload text-4xl text-base-content/40 mb-3" />
+            <p class="text-sm mb-1">拖拽图片到这里，或点击上传</p>
+            <p class="text-xs text-base-content/50">JPG、PNG、WEBP（最大 5MB）</p>
+          </div>
 
-        <input
-          ref="fileInput"
-          type="file"
-          accept="image/*"
-          class="hidden"
-          @change="handleFileSelect"
-        />
-      </div>
-    </div>
+          <div v-else class="relative">
+            <img :src="previewImage" class="rounded-xl max-h-80 w-full object-cover" />
+            <button
+              class="btn btn-circle btn-ghost absolute top-2 right-2 bg-base-100/90"
+              @click="clearImage"
+            >
+              <i class="i-mdi-close" />
+            </button>
+          </div>
 
-    <!-- Answer and hint section -->
-    <div class="card bg-base-100 shadow-lg mb-6">
-      <div class="card-body">
-        <h2 class="card-title mb-4">2. 设置答案</h2>
-
-        <div class="form-control mb-4">
-          <label class="label">
-            <span class="label-text text-lg">谜底答案</span>
-            <span class="label-text-alt text-error">必填</span>
-          </label>
           <input
-            v-model="answer"
-            type="text"
-            class="input input-bordered input-lg"
-            placeholder="输入正确答案..."
-            maxlength="500"
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            @change="handleFileSelect"
           />
-          <label class="label">
-            <span class="label-text-alt">答案长度：{{ answerLength }} 个字符</span>
-          </label>
         </div>
+      </div>
+    </section>
 
-        <div class="form-control mb-4">
-          <label class="label">
-            <span class="label-text">提示语（可选）</span>
-            <span class="label-text-alt">帮助猜谜者</span>
-          </label>
-          <textarea
-            v-model="hint"
-            class="textarea textarea-bordered h-20"
-            placeholder="给猜谜者一些提示..."
-            maxlength="500"
-          ></textarea>
-        </div>
+    <!-- Answer and hint -->
+    <section class="mb-8">
+      <div class="card bg-base-100">
+        <div class="card-body p-6">
+          <h2 class="card-title text-lg mb-4 flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-primary text-primary-content flex items-center justify-center text-sm">2</span>
+            设置答案
+          </h2>
 
-        <div class="form-control mb-4">
-          <label class="label cursor-pointer justify-start gap-4">
+          <div class="form-control mb-4">
+            <label class="label">
+              <span class="label-text font-medium">谜底答案</span>
+              <span class="label-text-alt text-error">必填</span>
+            </label>
+            <input
+              v-model="answer"
+              type="text"
+              class="input input-bordered w-full"
+              placeholder="输入正确答案..."
+              maxlength="500"
+            />
+            <label class="label">
+              <span class="label-text-alt">{{ answerLength }} 个字符</span>
+            </label>
+          </div>
+
+          <div class="form-control mb-4">
+            <label class="label">
+              <span class="label-text">提示语（可选）</span>
+            </label>
+            <textarea
+              v-model="hint"
+              class="textarea textarea-bordered h-20"
+              placeholder="给猜谜者一些提示..."
+              maxlength="500"
+            ></textarea>
+          </div>
+
+          <label class="label cursor-pointer justify-start gap-3">
             <input
               v-model="caseSensitive"
               type="checkbox"
@@ -268,19 +271,22 @@ function closeShareModal() {
           </label>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Expiry time section -->
-    <div class="card bg-base-100 shadow-lg mb-6">
-      <div class="card-body">
-        <h2 class="card-title mb-4">3. 设置过期时间</h2>
+    <!-- Expiry time -->
+    <section class="mb-8">
+      <div class="card bg-base-100">
+        <div class="card-body p-6">
+          <h2 class="card-title text-lg mb-4 flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-primary text-primary-content flex items-center justify-center text-sm">3</span>
+            过期时间
+          </h2>
 
-        <div class="form-control">
-          <div class="join w-full">
+          <div class="flex flex-wrap gap-2">
             <label
               v-for="option in expiryOptions"
               :key="option.value"
-              class="join-item btn btn-lg flex-1 cursor-pointer"
+              class="btn btn-outline"
               :class="{ 'btn-active': expiresIn === option.value }"
             >
               <input
@@ -293,17 +299,17 @@ function closeShareModal() {
               {{ option.label }}
             </label>
           </div>
-          <label class="label">
+          <label class="label mt-2">
             <span class="label-text-alt">过期后仍可猜测，但不计入统计</span>
           </label>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Submit buttons -->
-    <div class="flex flex-col sm:flex-row gap-4">
+    <!-- Actions -->
+    <div class="flex flex-col sm:flex-row gap-3">
       <button
-        class="btn btn-primary btn-lg flex-1 gap-2"
+        class="btn btn-primary flex-1 gap-2"
         :disabled="!canSubmit || loading"
         @click="createPuzzle"
       >
@@ -312,7 +318,7 @@ function closeShareModal() {
         生成谜题
       </button>
       <button
-        class="btn btn-ghost btn-lg gap-2"
+        class="btn btn-ghost gap-2"
         :disabled="loading"
         @click="resetForm"
       >
@@ -324,8 +330,11 @@ function closeShareModal() {
     <!-- Share modal -->
     <dialog v-if="showShareModal" class="modal modal-open">
       <div class="modal-box">
-        <h3 class="font-bold text-lg mb-4">🎉 谜题创建成功！</h3>
-        <p class="mb-4">复制下面的链接分享给朋友：</p>
+        <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+          <span class="text-2xl">🎉</span>
+          谜题创建成功！
+        </h3>
+        <p class="mb-4 text-base-content/80">复制下面的链接分享给朋友：</p>
         <div class="join w-full mb-4">
           <input
             :value="shareUrl"
@@ -338,7 +347,7 @@ function closeShareModal() {
           </button>
         </div>
         <div class="modal-action">
-          <button class="btn" @click="closeShareModal">关闭</button>
+          <button class="btn btn-ghost" @click="closeShareModal">关闭</button>
         </div>
       </div>
       <div class="modal-backdrop" @click="closeShareModal"></div>

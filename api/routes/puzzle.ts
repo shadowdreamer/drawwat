@@ -276,7 +276,8 @@ puzzleRoute.post('/puzzles/:id/guess', authMiddleware, zValidator('json', guessS
   // If correct and not already solved and not expired, add to solves
   if (isCorrect && !existingSolve && !expired) {
     const solvedAt = new Date().toISOString()
-    const createdAt = new Date((puzzle as any).created_at)
+    // Parse created_at as UTC (SQLite returns UTC without timezone suffix)
+    const createdAt = new Date((puzzle as any).created_at + 'Z')
     const timeToSolve = Math.floor((new Date().getTime() - createdAt.getTime()) / 1000)
 
     await db.prepare(`
@@ -302,7 +303,8 @@ puzzleRoute.post('/puzzles/:id/guess', authMiddleware, zValidator('json', guessS
     response.correct_answer = answer
     response.message = '恭喜你答对了！'
     if (!expired && !existingSolve) {
-      const createdAt = new Date((puzzle as any).created_at)
+      // Parse created_at as UTC (SQLite returns UTC without timezone suffix)
+      const createdAt = new Date((puzzle as any).created_at + 'Z')
       response.time_to_solve = Math.floor((new Date().getTime() - createdAt.getTime()) / 1000)
     }
   } else {
