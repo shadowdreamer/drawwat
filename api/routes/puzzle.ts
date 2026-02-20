@@ -7,6 +7,50 @@ import type { Variables } from '../middleware/auth'
 
 export const puzzleRoute = new Hono<{ Bindings: Env, Variables: Variables }>()
 
+// R2 configuration
+const R2_PATH_PREFIX = 'drawwat'
+
+// Helper function to generate R2 key with yyyy-mm directory structure
+function generateR2Key(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const filename = `${crypto.randomUUID()}.webp`
+  return `${R2_PATH_PREFIX}/${year}-${month}/${filename}`
+}
+
+// Helper function to upload image to R2
+async function uploadImageToR2(
+  env: Env,
+  imageData: string
+): Promise<string> {
+  // Parse data URL
+  const matches = imageData.match(/^data:image\/(\w+);base64,(.+)$/)
+  if (!matches) {
+    throw new Error('Invalid image data format')
+  }
+
+  const [, format, base64Data] = matches
+  const binaryString = atob(base64Data)
+  const bytes = new Uint8Array(binaryString.length)
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i)
+  }
+
+  // Generate R2 key
+  const key = generateR2Key()
+
+  // Upload to R2
+  await env.STATIC_BUCKET.put(key, bytes, {
+    httpMetadata: {
+      contentType: `image/${format}`,
+    },
+  })
+
+  // Return public URL
+  return `${env.R2_CUSTOM_DOMAIN}/${key}`
+}
+
 // Helper function to calculate character matches
 function calculateMatches(answer: string, guess: string, caseSensitive: boolean): { correctChars: number, correctPositions: number } {
   const normalizedAnswer = caseSensitive ? answer : answer.toLowerCase()
@@ -62,17 +106,8 @@ puzzleRoute.post('/puzzles', authMiddleware, zValidator('json', createPuzzleSche
   const userId = c.get('userId')
 
   try {
-    // TODO: Upload image to R2 or other storage
-    // For now, we'll use a placeholder approach
-    // In production, you should:
-    // 1. Decode base64
-    // 2. Upload to R2
-    // 3. Get the URL
-
-    // Simplified: use data URL (not recommended for production)
-    const image_url = image_data.startsWith('data:')
-      ? image_data
-      : `data:image/jpeg;base64,${image_data}`
+    // Upload image to R2 storage
+    const image_url = await uploadImageToR2(c.env, image_data)
 
     // Calculate expiry time
     const expires_at = expires_in === 0 ? null : new Date(Date.now() + expires_in * 1000).toISOString()

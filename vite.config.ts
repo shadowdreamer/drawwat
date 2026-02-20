@@ -12,14 +12,12 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  // server: {
-  //   host: "localhost",
-  //   port: 8888,
-  //   open: true,
-  //   proxy: {},
-  // },
   plugins: [
-    Vue(),
+    Vue({
+      features:{
+        customElement:['Tldraw']
+      }
+    }),
     cloudflare(),
     Icons({
       scale: 1.5, // Scale of icons against 1em
@@ -64,6 +62,5 @@ export default defineConfig({
     alias: {
       "@/": `${resolve(__dirname, "src")}/`,
     },
-  },
-
+  }
 });

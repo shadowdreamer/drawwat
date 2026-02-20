@@ -7,7 +7,10 @@
       "Bash(pnpm wrangler d1 migrations apply:*)",
       "Bash(pnpm dev:*)",
       "Bash(pnpm wrangler dev:*)",
-      "Bash(pnpm build-only:*)"
+      "Bash(pnpm build-only:*)",
+      "Bash(curl:*)",
+      "Bash(pnpm list:*)",
+      "Bash(pnpm ls:*)"
     ]
   }
 }

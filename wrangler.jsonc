@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "cf-worker-hono-vue3-template",
+	"name": "drawwat",
 	"main": "api/index.ts",
 	"compatibility_date": "2025-04-03",
 	"assets": {
@@ -17,18 +17,19 @@
 	"observability": {
 		"enabled": true
 	},
-	"vars": {
-		"BGM_APP_ID": "bgm1345aaf31ef839bc",
-		"BGM_APP_SECRET": "28b67f13d0ce2e3f045442aebd511b81",
-		"BGM_REDIRECT_URI": "http://localhost:5173/auth/callback"
-	},
 	"d1_databases": [
     {
       "binding": "MISC_DB",
-      "database_name": "misc",
-      "database_id": "YOUR_PREVIEW_D1_ID",
-      "preview_database_id": "YOUR_PREVIEW_D1_ID",
+      "database_name": "drawwat",
+      "database_id": "107b29c2-84c1-447e-a3ed-02e470546f87",
+      "preview_database_id": "107b29c2-84c1-447e-a3ed-02e470546f87",
       "migrations_dir": "api/migrations"
+    }
+  ],
+	"r2_buckets": [
+    {
+      "binding": "STATIC_BUCKET",
+      "bucket_name": "static"
     }
   ],
 	/**

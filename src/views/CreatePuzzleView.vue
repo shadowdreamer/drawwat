@@ -2,15 +2,14 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
+import TldrawCanvas from '../components/TldrawCanvas.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
+const tldrawCanvasRef = ref<InstanceType<typeof TldrawCanvas> | null>(null)
+
 // Form data
-const imageFile = ref<File | null>(null)
-const imageData = ref('')
-const previewImage = ref('')
-const fileInput = ref<HTMLInputElement | null>(null)
 const answer = ref('')
 const hint = ref('')
 const caseSensitive = ref(false)
@@ -33,94 +32,36 @@ const expiryOptions = [
 
 // Computed
 const canSubmit = computed(() => {
-  return imageData.value && answer.value.trim().length > 0
+  return answer.value.trim().length > 0
 })
 
 const answerLength = computed(() => answer.value.length)
 
-// Handle file selection
-function handleFileSelect(event: Event) {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (!file) return
-
-  if (!file.type.startsWith('image/')) {
-    error.value = '请选择图片文件'
-    return
-  }
-
-  if (file.size > 5 * 1024 * 1024) {
-    error.value = '图片大小不能超过 5MB'
-    return
-  }
-
-  imageFile.value = file
-  error.value = ''
-
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    imageData.value = e.target?.result as string
-    previewImage.value = e.target?.result as string
-  }
-  reader.readAsDataURL(file)
-}
-
-// Handle drag and drop
-function handleDragOver(event: DragEvent) {
-  event.preventDefault()
-}
-
-function handleDrop(event: DragEvent) {
-  event.preventDefault()
-  const file = event.dataTransfer?.files[0]
-  if (!file) return
-
-  if (!file.type.startsWith('image/')) {
-    error.value = '请选择图片文件'
-    return
-  }
-
-  if (file.size > 5 * 1024 * 1024) {
-    error.value = '图片大小不能超过 5MB'
-    return
-  }
-
-  imageFile.value = file
-  error.value = ''
-
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    imageData.value = e.target?.result as string
-    previewImage.value = e.target?.result as string
-  }
-  reader.readAsDataURL(file)
-}
-
-// Clear image
-function clearImage() {
-  imageFile.value = null
-  imageData.value = ''
-  previewImage.value = ''
-}
-
 // Reset form
 function resetForm() {
-  clearImage()
   answer.value = ''
   hint.value = ''
   caseSensitive.value = false
   expiresIn.value = 1209600
   error.value = ''
+  tldrawCanvasRef.value?.clearCanvas()
 }
 
 // Create puzzle
 async function createPuzzle() {
   if (!canSubmit.value || loading.value) return
+  if (!tldrawCanvasRef.value) {
+    error.value = '画板未加载'
+    return
+  }
 
   loading.value = true
   error.value = ''
 
   try {
+    // Export canvas to base64 image
+    const imageData = await tldrawCanvasRef.value.exportAsImage()
+
     const response = await fetch('/api/puzzles', {
       method: 'POST',
       headers: {
@@ -128,7 +69,7 @@ async function createPuzzle() {
         'Authorization': `Bearer ${authStore.token}`
       },
       body: JSON.stringify({
-        image_data: imageData.value,
+        image_data: imageData,
         answer: answer.value.trim(),
         hint: hint.value.trim() || undefined,
         case_sensitive: caseSensitive.value,
@@ -173,7 +114,7 @@ function closeShareModal() {
     <!-- Header -->
     <div class="mb-12">
       <h1 class="text-2xl sm:text-3xl font-bold font-display mb-3">创建新谜题</h1>
-      <p class="text-base-content/60">上传图片，设置答案，生成分享链接</p>
+      <p class="text-base-content/60">在画板上绘制图片，设置答案，生成分享链接</p>
     </div>
 
     <!-- Error alert -->
@@ -182,43 +123,19 @@ function closeShareModal() {
       <span>{{ error }}</span>
     </div>
 
-    <!-- Image upload -->
+    <!-- Canvas section -->
     <section class="mb-10">
       <div class="card bg-base-100">
         <div class="card-body p-8">
           <h2 class="card-title text-lg mb-6 flex items-center gap-3">
             <span class="w-7 h-7 rounded-full bg-primary text-primary-content flex items-center justify-center text-sm font-medium">1</span>
-            上传图片
+            绘制图片
           </h2>
 
-          <div v-if="!previewImage"
-            class="border-2 border-dashed border-base-300 rounded-xl p-16 text-center hover:border-primary cursor-pointer transition-colors"
-            @dragover.prevent="handleDragOver"
-            @drop.prevent="handleDrop"
-            @click="fileInput?.click()"
-          >
-            <i class="i-mdi-cloud-upload text-5xl text-base-content/40 mb-4" />
-            <p class="text-sm mb-2">拖拽图片到这里，或点击上传</p>
-            <p class="text-xs text-base-content/50">JPG、PNG、WEBP（最大 5MB）</p>
+          <div class="tldraw-container">
+            <TldrawCanvas ref="tldrawCanvasRef" />
           </div>
-
-          <div v-else class="relative">
-            <img :src="previewImage" class="rounded-xl max-h-80 w-full object-cover" />
-            <button
-              class="btn btn-circle btn-ghost absolute top-3 right-3 bg-base-100/90"
-              @click="clearImage"
-            >
-              <i class="i-mdi-close" />
-            </button>
-          </div>
-
-          <input
-            ref="fileInput"
-            type="file"
-            accept="image/*"
-            class="hidden"
-            @change="handleFileSelect"
-          />
+          <p class="text-xs text-base-content/50 mt-3 text-center">使用画板绘制你的谜题图片</p>
         </div>
       </div>
     </section>
@@ -354,3 +271,11 @@ function closeShareModal() {
     </dialog>
   </div>
 </template>
+
+<style scoped>
+.tldraw-container {
+  border: 1px solid hsl(var(--b3));
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+</style>

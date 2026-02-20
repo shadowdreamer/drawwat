@@ -47,11 +47,11 @@ authRoute.post('/auth', zValidator('json', authSchema), async (c) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        client_id: c.env.BGM_APP_ID,
+        client_id: c.env.VITE_BGM_CLIENT_ID,
         client_secret: c.env.BGM_APP_SECRET,
         code,
         grant_type: 'authorization_code',
-        redirect_uri: c.env.BGM_REDIRECT_URI
+        redirect_uri: c.env.VITE_BGM_REDIRECT_URI
       })
     })
 
@@ -172,11 +172,11 @@ authRoute.post('/auth/refresh', async (c) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        client_id: c.env.BGM_APP_ID,
+        client_id: c.env.VITE_BGM_CLIENT_ID,
         client_secret: c.env.BGM_APP_SECRET,
         refresh_token: refresh_token,
         grant_type: 'refresh_token',
-        redirect_uri: c.env.BGM_REDIRECT_URI
+        redirect_uri: c.env.VITE_BGM_REDIRECT_URI
       })
     })
 

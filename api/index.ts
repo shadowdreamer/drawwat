@@ -6,9 +6,11 @@ import { puzzleRoute } from "./routes/puzzle";
 
 export type Env = {
   MISC_DB: D1Database;
-  BGM_APP_ID: string;
+  STATIC_BUCKET: R2Bucket;
+  VITE_BGM_CLIENT_ID: string;
   BGM_APP_SECRET: string;
-  BGM_REDIRECT_URI: string;
+  VITE_BGM_REDIRECT_URI: string;
+  R2_CUSTOM_DOMAIN: string;
 }
 
 const app = new Hono<{ Bindings: Env }>();

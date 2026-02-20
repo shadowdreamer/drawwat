@@ -126,7 +126,7 @@ export const useAuthStore = defineStore('auth', () => {
     const params = new URLSearchParams({
       client_id: import.meta.env.VITE_BGM_CLIENT_ID,
       response_type: 'code',
-      redirect_uri: import.meta.env.VITE_BGM_REDIRECT_URI,
+      redirect_uri: import.meta.env.VITE_VITE_BGM_REDIRECT_URI,
       state: generateRandomState() // 防止 CSRF 攻击
     })
 
@@ -448,9 +448,9 @@ authRoute.post('/auth', zValidator('json', authSchema), async (c) => {
 
   try {
     // 从环境变量获取 Bangumi OAuth 配置
-    const CLIENT_ID = c.env.BGM_APP_ID
+    const CLIENT_ID = c.env.VITE_BGM_CLIENT_ID
     const CLIENT_SECRET = c.env.BGM_APP_SECRET
-    const REDIRECT_URI = c.env.BGM_REDIRECT_URI
+    const REDIRECT_URI = c.env.VITE_BGM_REDIRECT_URI
 
     // 调用 Bangumi OAuth API: POST https://bgm.tv/oauth/access_token
     const tokenResponse = await fetch('https://bgm.tv/oauth/access_token', {
@@ -551,9 +551,9 @@ authRoute.post('/auth/refresh', async (c) => {
   }
 
   try {
-    const CLIENT_ID = c.env.BGM_APP_ID
+    const CLIENT_ID = c.env.VITE_BGM_CLIENT_ID
     const CLIENT_SECRET = c.env.BGM_APP_SECRET
-    const REDIRECT_URI = c.env.BGM_REDIRECT_URI
+    const REDIRECT_URI = c.env.VITE_BGM_REDIRECT_URI
 
     // 调用 Bangumi OAuth API 刷新 token
     const tokenResponse = await fetch('https://bgm.tv/oauth/access_token', {
@@ -692,9 +692,9 @@ import { userRoute } from './routes/user'
 
 type Env = {
   MISC_DB: D1Database
-  BGM_APP_ID: string
+  VITE_BGM_CLIENT_ID: string
   BGM_APP_SECRET: string
-  BGM_REDIRECT_URI: string
+  VITE_BGM_REDIRECT_URI: string
 }
 
 const app = new Hono<{ Bindings: Env }>()
@@ -721,14 +721,14 @@ export default app
 ```bash
 # Bangumi OAuth 配置
 VITE_BGM_CLIENT_ID="bgm1345aaf31ef839bc"
-VITE_BGM_REDIRECT_URI=http://localhost:5173/auth/callback
+VITE_VITE_BGM_REDIRECT_URI=http://localhost:5173/auth/callback
 ```
 
 **生产环境** (`.env.production`):
 
 ```bash
 VITE_BGM_CLIENT_ID="bgm1345aaf31ef839bc"
-VITE_BGM_REDIRECT_URI=https://yourdomain.com/auth/callback
+VITE_VITE_BGM_REDIRECT_URI=https://yourdomain.com/auth/callback
 ```
 
 ### 6.2 后端环境变量 (wrangler.jsonc)
@@ -736,9 +736,9 @@ VITE_BGM_REDIRECT_URI=https://yourdomain.com/auth/callback
 ```json
 {
   "vars": {
-    "BGM_APP_ID": "bgm1345aaf31ef839bc",
+    "VITE_BGM_CLIENT_ID": "bgm1345aaf31ef839bc",
     "BGM_APP_SECRET": "28b67f13d0ce2e3f045442aebd511b81",
-    "BGM_REDIRECT_URI": "https://yourdomain.com/auth/callback"
+    "VITE_BGM_REDIRECT_URI": "https://yourdomain.com/auth/callback"
   }
 }
 ```
