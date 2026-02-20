@@ -19,31 +19,19 @@ function generateR2Key(): string {
   return `${R2_PATH_PREFIX}/${year}-${month}/${filename}`
 }
 
-// Helper function to upload image to R2
+// Helper function to upload image to R2 (accepts blob)
 async function uploadImageToR2(
   env: Env,
-  imageData: string
+  imageData: ArrayBuffer,
+  contentType: string = 'image/webp'
 ): Promise<string> {
-  // Parse data URL
-  const matches = imageData.match(/^data:image\/(\w+);base64,(.+)$/)
-  if (!matches) {
-    throw new Error('Invalid image data format')
-  }
-
-  const [, format, base64Data] = matches
-  const binaryString = atob(base64Data)
-  const bytes = new Uint8Array(binaryString.length)
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i)
-  }
-
   // Generate R2 key
   const key = generateR2Key()
 
   // Upload to R2
-  await env.STATIC_BUCKET.put(key, bytes, {
+  await env.STATIC_BUCKET.put(key, imageData, {
     httpMetadata: {
-      contentType: `image/${format}`,
+      contentType,
     },
   })
 
@@ -92,22 +80,26 @@ function isExpired(expiresAt: string | null): boolean {
   return new Date(expiresAt) < new Date()
 }
 
-// POST /api/puzzles - Create new puzzle
-const createPuzzleSchema = z.object({
-  image_data: z.string().min(1), // Base64 encoded image
-  answer: z.string().min(1).max(500),
-  hint: z.string().max(500).optional(),
-  case_sensitive: z.boolean().optional().default(false),
-  expires_in: z.number().int().min(0).optional().default(1209600) // Default 14 days, 0 = never expire
-})
-
-puzzleRoute.post('/puzzles', authMiddleware, zValidator('json', createPuzzleSchema), async (c) => {
-  const { image_data, answer, hint, case_sensitive, expires_in } = c.req.valid('json')
+// POST /api/puzzles - Create new puzzle (multipart/form-data with file upload)
+puzzleRoute.post('/puzzles', authMiddleware, async (c) => {
   const userId = c.get('userId')
 
   try {
+    // Parse multipart form data
+    const formData = await c.req.formData()
+    const imageFile = formData.get('image') as File
+    const answer = formData.get('answer') as string
+    const hint = formData.get('hint') as string | null
+    const case_sensitive = formData.get('case_sensitive') === 'true'
+    const expires_in = parseInt(formData.get('expires_in') as string) || 1209600
+
+    // Validate required fields
+    if (!imageFile || !answer) {
+      return c.json({ error: 'image and answer are required' }, 400)
+    }
+
     // Upload image to R2 storage
-    const image_url = await uploadImageToR2(c.env, image_data)
+    const image_url = await uploadImageToR2(c.env, await imageFile.arrayBuffer(), imageFile.type)
 
     // Calculate expiry time
     const expires_at = expires_in === 0 ? null : new Date(Date.now() + expires_in * 1000).toISOString()

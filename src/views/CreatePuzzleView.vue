@@ -59,21 +59,29 @@ async function createPuzzle() {
   error.value = ''
 
   try {
-    // Export canvas to base64 image
-    const imageData = await tldrawCanvasRef.value.exportAsImage()
+    // Export canvas to blob image
+    const imageBlob = await tldrawCanvasRef.value.exportAsImage()
+    if (!imageBlob) {
+      error.value = '图片导出失败'
+      return
+    }
+
+    // Create FormData
+    const formData = new FormData()
+    formData.append('image', imageBlob, 'puzzle.webp')
+    formData.append('answer', answer.value.trim())
+    if (hint.value.trim()) {
+      formData.append('hint', hint.value.trim())
+    }
+    formData.append('case_sensitive', String(caseSensitive.value))
+    formData.append('expires_in', String(expiresIn.value))
+
     const response = await fetch('/api/puzzles', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${authStore.token}`
       },
-      body: JSON.stringify({
-        image_data: imageData,
-        answer: answer.value.trim(),
-        hint: hint.value.trim() || undefined,
-        case_sensitive: caseSensitive.value,
-        expires_in: expiresIn.value
-      })
+      body: formData
     })
 
     if (!response.ok) {
