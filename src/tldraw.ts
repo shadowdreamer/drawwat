@@ -27,6 +27,7 @@ export class TldrawElement extends HTMLElement {
         },
         // 你可以在这里通过属性传递配置
         persistenceKey: this.getAttribute('persistence-key') || 'tldraw-example',
+        licenseKey:'tldraw-2026-05-31/WyJoYXp6WVMwSiIsWyIqIl0sMTYsIjIwMjYtMDUtMzEiXQ.g2USTQJBbXguiS1ngfMzE4VmmyXLVWQEMgDm7BC6qZUkwMezzZWUQs9tQMmhPFBNpcXAAbKWN8alH9Tqyakpqg',
         onMount: (editor) => {
           // 将编辑器实例暴露给外部 JS
           this.editor = editor
