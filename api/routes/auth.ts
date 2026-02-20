@@ -32,13 +32,20 @@ const authSchema = z.object({
 })
 
 // POST /api/auth - Exchange authorization code for access token
-authRoute.post('/auth', zValidator('json', authSchema), async (c) => {
+authRoute.post('wan', zValidator('json', authSchema), async (c) => {
   const { code } = c.req.valid('json')
 
   if (!code) {
     return c.json({ error: 'Missing authorization code' }, 400)
   }
-
+  const body = JSON.stringify({
+        client_id: c.env.VITE_BGM_CLIENT_ID,
+        client_secret: c.env.BGM_APP_SECRET,
+        code,
+        grant_type: 'authorization_code',
+        redirect_uri: c.env.VITE_BGM_REDIRECT_URI
+      })
+      console.log(body)
   try {
     // Exchange code for access token with Bangumi OAuth API
     const tokenResponse = await fetch('https://bgm.tv/oauth/access_token', {
@@ -46,13 +53,7 @@ authRoute.post('/auth', zValidator('json', authSchema), async (c) => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        client_id: c.env.VITE_BGM_CLIENT_ID,
-        client_secret: c.env.BGM_APP_SECRET,
-        code,
-        grant_type: 'authorization_code',
-        redirect_uri: c.env.VITE_BGM_REDIRECT_URI
-      })
+      body: body
     })
 
     if (!tokenResponse.ok) {

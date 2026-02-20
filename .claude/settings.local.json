@@ -12,7 +12,9 @@
       "Bash(pnpm list:*)",
       "Bash(pnpm ls:*)",
       "Bash(cmd /c \"set HTTP_PROXY=&& set HTTPS_PROXY=&& set http_proxy=&& set https_proxy=&& pnpm dev\")",
-      "Bash(powershell -Command \"$env:HTTP_PROXY=''''; $env:HTTPS_PROXY=''''; $env:http_proxy=''''; $env:https_proxy=''''; pnpm dev\")"
+      "Bash(powershell -Command \"$env:HTTP_PROXY=''''; $env:HTTPS_PROXY=''''; $env:http_proxy=''''; $env:https_proxy=''''; pnpm dev\")",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)"
     ]
   }
 }
