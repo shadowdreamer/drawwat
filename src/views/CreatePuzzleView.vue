@@ -61,7 +61,6 @@ async function createPuzzle() {
   try {
     // Export canvas to base64 image
     const imageData = await tldrawCanvasRef.value.exportAsImage()
-
     const response = await fetch('/api/puzzles', {
       method: 'POST',
       headers: {

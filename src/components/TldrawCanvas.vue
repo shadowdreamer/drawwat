@@ -1,17 +1,26 @@
 <script setup lang="ts">
+import type { TldrawElement } from "@/tldraw";
 import { ref, onMounted, onUnmounted } from 'vue'
-import { Tldraw } from 'tldraw'
-import 'tldraw/tldraw.css'
 
 defineExpose({
-  clearCanvas:()=>{},
-  exportAsImage:()=>{},
+  clearCanvas:()=>{
+    const board = document.getElementById('my-board') as TldrawElement;
+    board?.clearCanvas();
+  },
+  exportAsImage:async ()=>{
+    const board = document.getElementById('my-board') as TldrawElement;
+    const blob = await board?.exportImage();
+    if (blob) {
+      // 创建下载链接
+      return blob.blob
+    }
+  },
 })
 </script>
 
 <template>
   <div class="tldraw-wrapper">
-    <Tldraw />
+    <web-tldraw id="my-board"></web-tldraw>
   </div>
 </template>
 

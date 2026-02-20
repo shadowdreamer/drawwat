@@ -14,8 +14,10 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 export default defineConfig({
   plugins: [
     Vue({
-      features:{
-        customElement:['Tldraw']
+      template:{
+        compilerOptions:{
+          isCustomElement:(tag)=>tag.startsWith('web-')
+        }
       }
     }),
     cloudflare(),
@@ -62,5 +64,8 @@ export default defineConfig({
     alias: {
       "@/": `${resolve(__dirname, "src")}/`,
     },
-  }
+  },
+  // optimizeDeps: {
+  //   exclude: ["tldraw"],
+  // },
 });
