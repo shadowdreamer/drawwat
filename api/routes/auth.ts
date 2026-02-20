@@ -32,7 +32,7 @@ const authSchema = z.object({
 })
 
 // POST /api/auth - Exchange authorization code for access token
-authRoute.post('/api/auth', zValidator('json', authSchema), async (c) => {
+authRoute.post('/auth', zValidator('json', authSchema), async (c) => {
   const { code } = c.req.valid('json')
 
   if (!code) {
