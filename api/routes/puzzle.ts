@@ -34,7 +34,7 @@ async function uploadImageToR2(
       contentType,
     },
   })
-
+  console.log("env.R2_CUSTOM_DOMAIN",env.R2_CUSTOM_DOMAIN)
   // Return public URL
   return `${env.R2_CUSTOM_DOMAIN}/${key}`
 }

@@ -45,7 +45,6 @@ authRoute.post('/auth', zValidator('json', authSchema), async (c) => {
       grant_type: 'authorization_code',
       redirect_uri: c.env.VITE_BGM_REDIRECT_URI
     })
-    console.log(body)
   try {
     // Exchange code for access token with Bangumi OAuth API
     const tokenResponse = await fetch('https://bgm.tv/oauth/access_token', {
