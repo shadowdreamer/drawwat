@@ -192,37 +192,32 @@ onMounted(() => {
       <!-- Left: Image Area -->
       <div class="flex-1 flex flex-col bg-base-300/30">
         <!-- Image Header -->
-        <div class="flex items-center justify-between px-6 py-3 bg-base-100/80 backdrop-blur-sm border-b border-base-300 shrink-0">
+        <div class="flex items-center justify-between px-6 py-3 bg-base-100/80 backdrop-blur-sm border-b border-base-300 shrink-0 gap-4">
           <div class="flex items-center gap-2">
             <i class="i-lucide-image text-primary" />
             <h1 class="font-semibold">谜题图片</h1>
           </div>
-          <div v-if="isExpired" class="badge badge-warning badge-sm">
-            已过期
-          </div>
-        </div>
 
-        <!-- Creator Card -->
-        <div v-if="puzzle.creator" class="px-6 pt-4">
+          <!-- Creator Card -->
           <a
+            v-if="puzzle.creator"
             :href="`https://bgm.tv/user/${puzzle.creator.bangumi_id}`"
             target="_blank"
             rel="noopener noreferrer"
-            class="card card-compact bg-base-100 shadow-sm hover:shadow-md transition-shadow border border-base-300"
+            class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-base-200 hover:bg-base-300 transition-colors border border-base-300"
           >
-            <div class="card-body p-3 flex-row items-center gap-3">
-              <img
-                :src="puzzle.creator.avatar_url || '/default-avatar.png'"
-                class="w-12 h-12 rounded-full object-cover"
-                :alt="puzzle.creator.username"
-              />
-              <div class="flex-1 min-w-0">
-                <div class="text-xs text-base-content/60 mb-0.5">出题人</div>
-                <div class="font-semibold truncate">{{ puzzle.creator.username }}</div>
-              </div>
-              <i class="i-lucide-external-link text-base-content/40" />
-            </div>
+            <img
+              :src="puzzle.creator.avatar_url || '/default-avatar.png'"
+              class="w-6 h-6 rounded-full object-cover"
+              :alt="puzzle.creator.username"
+            />
+            <span class="text-sm font-medium">{{ puzzle.creator.username }}</span>
+            <i class="i-lucide-external-link text-base-content/40 text-sm" />
           </a>
+
+          <div v-if="isExpired" class="badge badge-warning badge-sm">
+            已过期
+          </div>
         </div>
 
         <!-- Image Container -->
@@ -404,38 +399,34 @@ onMounted(() => {
     <div class="lg:hidden">
       <!-- Image Section -->
       <section class="bg-base-300/30">
-        <div class="flex items-center justify-between px-4 py-3 bg-base-100/80 backdrop-blur-sm border-b border-base-300">
-          <div class="flex items-center gap-2">
-            <i class="i-lucide-image text-primary" />
+        <div class="flex items-center justify-between px-4 py-3 bg-base-100/80 backdrop-blur-sm border-b border-base-300 gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <i class="i-lucide-image text-primary shrink-0" />
             <h1 class="font-semibold">谜题图片</h1>
           </div>
-          <div v-if="isExpired" class="badge badge-warning badge-sm">
+
+          <!-- Creator Card (Mobile) -->
+          <a
+            v-if="puzzle.creator"
+            :href="`https://bgm.tv/user/${puzzle.creator.bangumi_id}`"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-base-200 hover:bg-base-300 transition-colors border border-base-300 min-w-0"
+          >
+            <img
+              :src="puzzle.creator.avatar_url || '/default-avatar.png'"
+              class="w-5 h-5 rounded-full object-cover shrink-0"
+              :alt="puzzle.creator.username"
+            />
+            <span class="text-sm font-medium truncate">{{ puzzle.creator.username }}</span>
+            <i class="i-lucide-external-link text-base-content/40 text-xs shrink-0" />
+          </a>
+
+          <div v-if="isExpired" class="badge badge-warning badge-sm shrink-0">
             已过期
           </div>
         </div>
 
-        <!-- Creator Card (Mobile) -->
-        <div v-if="puzzle.creator" class="px-4 pt-4">
-          <a
-            :href="`https://bgm.tv/user/${puzzle.creator.bangumi_id}`"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="card card-compact bg-base-100 shadow-sm hover:shadow-md transition-shadow border border-base-300"
-          >
-            <div class="card-body p-3 flex-row items-center gap-3">
-              <img
-                :src="puzzle.creator.avatar_url || '/default-avatar.png'"
-                class="w-12 h-12 rounded-full object-cover"
-                :alt="puzzle.creator.username"
-              />
-              <div class="flex-1 min-w-0">
-                <div class="text-xs text-base-content/60 mb-0.5">出题人</div>
-                <div class="font-semibold truncate">{{ puzzle.creator.username }}</div>
-              </div>
-              <i class="i-lucide-external-link text-base-content/40" />
-            </div>
-          </a>
-        </div>
         <div class="p-4">
           <img
             :src="getR2ImageUrl(puzzle.image_url)"
