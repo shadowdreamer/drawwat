@@ -440,8 +440,8 @@ puzzleRoute.get('/puzzles/:id/solves', async (c) => {
   })
 })
 
-// GET /api/puzzles/public - Get public puzzles (no auth required)
-puzzleRoute.get('/puzzles/public', async (c) => {
+// GET /api/public-puzzles - Get public puzzles (no auth required)
+puzzleRoute.get('/public-puzzles', async (c) => {
   const db = c.env.MISC_DB
 
   const puzzles = await db
