@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { authRoute } from "./routes/auth";
 import { userRoute } from "./routes/user";
 import { puzzleRoute } from "./routes/puzzle";
+import { bangumiRoute } from "./routes/bangumi";
 
 export type Env = {
   MISC_DB: D1Database;
@@ -30,6 +31,7 @@ app.get("/api/health", (c) => {
 app.route("/api", authRoute);
 app.route("/api", userRoute);
 app.route("/api", puzzleRoute);
+app.route("/api", bangumiRoute);
 
 // 404 handling
 app.notFound((c) => {

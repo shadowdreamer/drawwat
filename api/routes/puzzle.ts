@@ -217,6 +217,8 @@ puzzleRoute.get('/puzzles/:id/stats', authMiddleware, async (c) => {
     .prepare(`
       SELECT
         u.username,
+        u.provider,
+        u.avatar_url,
         ps.solved_at,
         ps.time_to_solve
       FROM puzzle_solves ps

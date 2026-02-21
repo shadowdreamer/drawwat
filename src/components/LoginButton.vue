@@ -1,9 +1,19 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
+import { createBangumiIdResolver, type BangumiIdResolver } from '../utils/bangumi'
+import { computed } from 'vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+// Create resolver for bangumi user nickname (username is bangumi id)
+const bangumiResolver = computed<BangumiIdResolver | null>(() => {
+  if (authStore.user?.provider === 'bangumi' && authStore.user?.username) {
+    return createBangumiIdResolver(authStore.user.username)
+  }
+  return null
+})
 
 function handleLogin() {
   authStore.toAuthPage()
@@ -42,7 +52,9 @@ function handleLogout() {
           />
         </div>
       </div>
-      <span class="hidden md:inline">{{ authStore.user?.username }}</span>
+      <span class="hidden md:inline">
+        {{ bangumiResolver?.isResolved ? bangumiResolver.nickname : authStore.user?.username }}
+      </span>
       <i class="i-lucide-chevron-down text-xs opacity-60" />
     </label>
     <ul
@@ -51,7 +63,7 @@ function handleLogout() {
       style="background-color: hsl(var(--b1));"
     >
       <li class="menu-title opacity-60">
-        {{ authStore.user?.username }}
+        {{ bangumiResolver?.isResolved ? bangumiResolver.nickname : authStore.user?.username }}
       </li>
       <li><RouterLink to="/my-puzzles"><i class="i-lucide-gamepad-2" />我的谜题</RouterLink></li>
       <li><a @click="handleLogout" class="text-error"><i class="i-lucide-log-out" />退出登录</a></li>
