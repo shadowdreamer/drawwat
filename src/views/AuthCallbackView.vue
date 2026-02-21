@@ -43,7 +43,7 @@ onMounted(async () => {
     </div>
 
     <div v-else-if="error" class="alert alert-error max-w-md">
-      <i class="i-mdi-alert-circle text-xl" />
+      <i class="i-lucide-alert-circle text-xl" />
       <div>
         <h3 class="font-bold">登录失败</h3>
         <div class="text-sm">{{ error }}</div>

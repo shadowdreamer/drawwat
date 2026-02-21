@@ -21,7 +21,7 @@ function handleLogout() {
     @click="handleLogin"
     class="btn btn-primary btn-sm gap-2"
   >
-    <i class="i-mdi-login-variant" />
+    <i class="i-lucide-log-in" />
     <span class="hidden sm:inline">登录</span>
   </button>
 
@@ -43,7 +43,7 @@ function handleLogout() {
         </div>
       </div>
       <span class="hidden md:inline">{{ authStore.user?.username }}</span>
-      <i class="i-mdi-chevron-down text-xs opacity-60" />
+      <i class="i-lucide-chevron-down text-xs opacity-60" />
     </label>
     <ul
       tabindex="0"
@@ -52,8 +52,8 @@ function handleLogout() {
       <li class="menu-title opacity-60">
         {{ authStore.user?.username }}
       </li>
-      <li><RouterLink to="/my-puzzles"><i class="i-mdi-gamepad-variant-outline" />我的谜题</RouterLink></li>
-      <li><a @click="handleLogout" class="text-error"><i class="i-mdi-logout-variant" />退出登录</a></li>
+      <li><RouterLink to="/my-puzzles"><i class="i-lucide-gamepad-2" />我的谜题</RouterLink></li>
+      <li><a @click="handleLogout" class="text-error"><i class="i-lucide-log-out" />退出登录</a></li>
     </ul>
   </div>
 </template>

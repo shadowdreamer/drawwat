@@ -27,7 +27,7 @@ defineExpose({
 <style scoped>
 .tldraw-wrapper {
   width: 100%;
-  height: 600px;
+  height: 100%;
   border-radius: 0.75rem;
   overflow: hidden;
   border: 1px solid hsl(var(--b3));

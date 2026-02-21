@@ -12,6 +12,7 @@ declare module 'vue' {
     NavBar: typeof import('./../src/components/NavBar.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ShareModal: typeof import('./../src/components/ShareModal.vue')['default']
     TldrawCanvas: typeof import('./../src/components/TldrawCanvas.vue')['default']
   }
 }

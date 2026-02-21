@@ -165,9 +165,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container mx-auto px-6 py-10 max-w-6xl">
+  <div class="min-h-screen bg-base-200">
     <!-- Loading state -->
-    <div v-if="loading" class="flex items-center justify-center min-h-[50vh]">
+    <div v-if="loading" class="flex items-center justify-center h-[calc(100vh-4rem)]">
       <div class="text-center">
         <div class="loading loading-spinner loading-lg mb-6"></div>
         <p class="text-base-content/60">加载谜题...</p>
@@ -175,67 +175,262 @@ onMounted(() => {
     </div>
 
     <!-- Error state -->
-    <div v-else-if="error" class="alert alert-error">
-      <i class="i-mdi-alert-circle" />
-      <span>{{ error }}</span>
+    <div v-else-if="error" class="flex items-center justify-center h-[calc(100vh-4rem)]">
+      <div class="alert alert-error max-w-md">
+        <i class="i-lucide-alert-circle" />
+        <span>{{ error }}</span>
+      </div>
     </div>
 
-    <!-- Puzzle content -->
-    <div v-else-if="puzzle" class="grid grid-cols-1 xl:grid-cols-3 gap-8">
-      <!-- Left column: Image and input -->
-      <div class="xl:col-span-2 space-y-8">
-        <!-- Puzzle image -->
-        <div class="card bg-base-100">
-          <figure class="p-6">
+    <!-- Desktop: Side by Side Layout -->
+    <div v-else-if="puzzle" class="hidden lg:flex h-[calc(100vh-4rem)]">
+      <!-- Left: Image Area -->
+      <div class="flex-1 flex flex-col bg-base-300/30">
+        <!-- Image Header -->
+        <div class="flex items-center justify-between px-6 py-3 bg-base-100/80 backdrop-blur-sm border-b border-base-300 shrink-0">
+          <div class="flex items-center gap-2">
+            <i class="i-lucide-image text-primary" />
+            <h1 class="font-semibold">谜题图片</h1>
+          </div>
+          <div v-if="isExpired" class="badge badge-warning badge-sm">
+            已过期
+          </div>
+        </div>
+
+        <!-- Image Container -->
+        <div class="flex-1 min-h-0 flex items-center justify-center p-6">
+          <div class="relative max-w-full max-h-full">
             <img
               :src="getR2ImageUrl(puzzle.image_url)"
-              class="rounded-xl w-full max-h-[480px] object-contain"
+              class="max-h-[calc(100vh-8rem)] w-auto object-contain rounded-xl shadow-lg"
               alt="谜题图片"
             />
-          </figure>
-        </div>
-
-        <!-- Hint -->
-        <div v-if="puzzle.hint" class="alert alert-info">
-          <i class="i-mdi-lightbulb-on" />
-          <span>{{ puzzle.hint }}</span>
-        </div>
-
-        <!-- Status alerts -->
-        <div v-if="isExpired" class="alert alert-warning">
-          <i class="i-mdi-alert" />
-          <div class="flex-1">
-            <h3 class="font-semibold">此谜题已过期</h3>
-            <div class="text-sm opacity-80">过期后的猜测不会计入统计</div>
-          </div>
-          <button
-            v-if="!showAnswer"
-            class="btn btn-sm btn-warning"
-            @click="revealAnswer"
-          >
-            查看答案
-          </button>
-        </div>
-
-        <div v-if="showAnswer" class="alert alert-success">
-          <i class="i-mdi-check-circle text-xl" />
-          <div>
-            <h3 class="font-semibold">正确答案是：</h3>
-            <div class="text-lg font-mono mt-2">{{ correctAnswer }}</div>
           </div>
         </div>
 
-        <div v-if="hasSolved && !showAnswer" class="alert alert-success">
-          <i class="i-mdi-trophy text-xl" />
-          <div>
-            <h3 class="font-semibold">恭喜你答对了！</h3>
-            <div class="text-sm opacity-80">你可以继续猜测，或查看排行榜</div>
+        <!-- Hint Bar (bottom) -->
+        <div v-if="puzzle.hint" class="px-6 py-3 bg-info/10 border-t border-info/20 shrink-0">
+          <div class="flex items-center gap-2">
+            <i class="i-lucide-lightbulb text-info" />
+            <span class="text-sm">{{ puzzle.hint }}</span>
           </div>
         </div>
+      </div>
 
-        <!-- Guess input -->
-        <div v-if="!hasSolved || !showAnswer" class="card bg-base-100">
-          <div class="card-body p-8">
+      <!-- Right: Guess Panel -->
+      <div class="w-96 flex flex-col bg-base-100 border-l border-base-300 shadow-xl">
+        <!-- Panel Header -->
+        <div class="px-6 py-4 border-b border-base-300 shrink-0">
+          <h2 class="text-lg font-bold font-display">猜测谜题</h2>
+          <p class="text-sm text-base-content/60 mt-1">输入答案看看你是否猜对了</p>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto">
+          <!-- Success Alert -->
+          <div v-if="hasSolved && !showAnswer" class="mx-4 mt-4">
+            <div class="alert alert-success alert-sm py-2">
+              <i class="i-lucide-trophy text-sm" />
+              <span class="text-sm">恭喜你答对了！</span>
+            </div>
+          </div>
+
+          <!-- Expired Alert -->
+          <div v-if="isExpired && !showAnswer" class="mx-4 mt-4">
+            <div class="alert alert-warning alert-sm py-2">
+              <i class="i-lucide-alert-triangle text-sm" />
+              <span class="text-sm flex-1">此谜题已过期</span>
+              <button class="btn btn-xs btn-warning" @click="revealAnswer">
+                查看答案
+              </button>
+            </div>
+          </div>
+
+          <!-- Answer Revealed -->
+          <div v-if="showAnswer" class="mx-4 mt-4">
+            <div class="alert alert-success alert-sm py-3">
+              <i class="i-lucide-circle-check" />
+              <div>
+                <div class="text-sm font-semibold">正确答案是：</div>
+                <div class="text-lg font-mono font-bold">{{ correctAnswer }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Guess Input -->
+          <div v-if="!hasSolved || !showAnswer" class="px-6 py-4 border-b border-base-300">
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text font-medium">输入你的答案</span>
+              </label>
+              <input
+                v-model="guess"
+                type="text"
+                class="input input-bordered input-sm text-center text-xl tracking-widest"
+                placeholder="输入答案..."
+                :disabled="submitting"
+                @keydown="handleKeydown"
+              />
+            </div>
+            <button
+              class="btn btn-primary w-full mt-3 gap-2"
+              :disabled="!guess.trim() || submitting"
+              @click="submitGuess"
+            >
+              <span v-if="submitting" class="loading loading-spinner loading-sm"></span>
+              <i class="i-lucide-send" />
+              提交猜测
+            </button>
+          </div>
+
+          <!-- Last Guess Result -->
+          <div v-if="guessResult && !guessResult.is_correct" class="px-4 py-4 border-b border-base-300">
+            <p class="text-sm font-medium mb-3">{{ guessResult.message }}</p>
+            <div class="flex gap-2 flex-wrap">
+              <div class="badge badge-success gap-1">
+                <i class="i-lucide-circle-check text-xs" />
+                {{ guessResult.hint.correct_chars }} 字符正确
+              </div>
+              <div class="badge badge-info gap-1">
+                <i class="i-lucide-target text-xs" />
+                {{ guessResult.hint.correct_positions }} 位置正确
+              </div>
+            </div>
+          </div>
+
+          <!-- Guess History -->
+          <div v-if="guesses.length > 0" class="border-b border-base-300">
+            <div class="px-6 py-3 border-b border-base-300 bg-base-200/50">
+              <h3 class="font-semibold text-sm">猜测历史 ({{ guesses.length }})</h3>
+            </div>
+            <div class="max-h-48 overflow-y-auto">
+              <table class="table table-zebra table-sm">
+                <thead class="sticky top-0 bg-base-100">
+                  <tr>
+                    <th class="py-2 text-xs">猜测</th>
+                    <th class="py-2 text-xs hidden sm:table-cell">时间</th>
+                    <th class="py-2 text-xs">提示</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(g, idx) in guesses" :key="idx" :class="{ 'opacity-50': g.is_after_expiry }">
+                    <td class="font-mono text-sm">{{ g.guess_answer }}</td>
+                    <td class="text-xs opacity-70 hidden sm:table-cell">{{ formatDate(g.guessed_at) }}</td>
+                    <td>
+                      <div v-if="!g.is_correct" class="flex gap-1 flex-wrap">
+                        <span v-if="g.correct_chars !== undefined" class="badge badge-success text-xs py-0">
+                          {{ g.correct_chars }}
+                        </span>
+                        <span v-if="g.correct_positions !== undefined" class="badge badge-info text-xs py-0">
+                          {{ g.correct_positions }}
+                        </span>
+                      </div>
+                      <i v-else class="i-lucide-circle-check text-success text-sm"></i>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Leaderboard -->
+          <div v-if="leaderboard.length > 0">
+            <div class="px-6 py-3 border-b border-base-300 bg-base-200/50">
+              <h3 class="font-semibold text-sm">成功排行榜</h3>
+            </div>
+            <div class="max-h-48 overflow-y-auto">
+              <table class="table table-zebra table-sm">
+                <thead class="sticky top-0 bg-base-100">
+                  <tr>
+                    <th class="py-2 text-xs">排名</th>
+                    <th class="py-2 text-xs">用户</th>
+                    <th class="py-2 text-xs">用时</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(entry, index) in leaderboard" :key="entry.user_id">
+                    <td>
+                      <span v-if="index === 0">🥇</span>
+                      <span v-else-if="index === 1">🥈</span>
+                      <span v-else-if="index === 2">🥉</span>
+                      <span v-else class="text-xs opacity-70">#{{ index + 1 }}</span>
+                    </td>
+                    <td class="text-sm">{{ entry.username }}</td>
+                    <td class="text-xs">{{ formatTime(entry.time_to_solve) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- No solves yet -->
+          <div v-else-if="!hasSolved" class="px-6 py-8 text-center">
+            <i class="i-lucide-info text-base-content/40 text-3xl mb-2" />
+            <p class="text-sm text-base-content/60">还没有人猜出这个谜题</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile: Vertical Layout -->
+    <div v-else-if="puzzle" class="lg:hidden">
+      <!-- Image Section -->
+      <section class="bg-base-300/30">
+        <div class="flex items-center justify-between px-4 py-3 bg-base-100/80 backdrop-blur-sm border-b border-base-300">
+          <div class="flex items-center gap-2">
+            <i class="i-lucide-image text-primary" />
+            <h1 class="font-semibold">谜题图片</h1>
+          </div>
+          <div v-if="isExpired" class="badge badge-warning badge-sm">
+            已过期
+          </div>
+        </div>
+        <div class="p-4">
+          <img
+            :src="getR2ImageUrl(puzzle.image_url)"
+            class="w-full rounded-xl shadow-lg"
+            alt="谜题图片"
+          />
+        </div>
+        <div v-if="puzzle.hint" class="px-4 pb-4">
+          <div class="alert alert-info alert-sm py-2">
+            <i class="i-lucide-lightbulb text-sm" />
+            <span class="text-sm">{{ puzzle.hint }}</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Guess Section -->
+      <section class="bg-base-100 border-t border-base-300">
+        <div class="container mx-auto px-4 py-6 max-w-lg">
+          <h2 class="text-lg font-bold font-display mb-4">猜测谜题</h2>
+
+          <!-- Status Alerts -->
+          <div v-if="hasSolved && !showAnswer" class="alert alert-success mb-4">
+            <i class="i-lucide-trophy" />
+            <span>恭喜你答对了！</span>
+          </div>
+
+          <div v-if="isExpired && !showAnswer" class="alert alert-warning mb-4">
+            <i class="i-lucide-alert-triangle" />
+            <div class="flex-1">
+              <div class="text-sm">此谜题已过期，过期后的猜测不会计入统计</div>
+            </div>
+            <button class="btn btn-sm btn-warning" @click="revealAnswer">
+              查看答案
+            </button>
+          </div>
+
+          <div v-if="showAnswer" class="alert alert-success mb-4">
+            <i class="i-lucide-circle-check" />
+            <div>
+              <h3 class="font-semibold">正确答案是：</h3>
+              <div class="text-lg font-mono mt-1">{{ correctAnswer }}</div>
+            </div>
+          </div>
+
+          <!-- Guess Input -->
+          <div v-if="!hasSolved || !showAnswer" class="mb-6">
             <div class="form-control">
               <label class="label">
                 <span class="label-text font-medium">输入你的答案</span>
@@ -249,117 +444,105 @@ onMounted(() => {
                 @keydown="handleKeydown"
               />
             </div>
-            <div class="card-actions justify-end mt-6">
-              <button
-                class="btn btn-primary btn-lg flex-1 gap-2"
-                :disabled="!guess.trim() || submitting"
-                @click="submitGuess"
-              >
-                <span v-if="submitting" class="loading loading-spinner"></span>
-                <i class="i-mdi-send" />
-                提交猜测
-              </button>
-            </div>
+            <button
+              class="btn btn-primary w-full mt-3 gap-2"
+              :disabled="!guess.trim() || submitting"
+              @click="submitGuess"
+            >
+              <span v-if="submitting" class="loading loading-spinner"></span>
+              <i class="i-lucide-send" />
+              提交猜测
+            </button>
           </div>
-        </div>
 
-        <!-- Last guess result -->
-        <div v-if="guessResult && !guessResult.is_correct" class="card bg-base-100 border-l-4 border-primary">
-          <div class="card-body p-6">
-            <p class="text-base font-medium mb-6">{{ guessResult.message }}</p>
-            <div class="flex gap-4 justify-center flex-wrap">
-              <div class="badge badge-lg badge-success gap-2 py-3 px-4">
-                <i class="i-mdi-check-circle" />
-                {{ guessResult.hint.correct_chars }} 个字符正确
-              </div>
-              <div class="badge badge-lg badge-info gap-2 py-3 px-4">
-                <i class="i-mdi-target" />
-                {{ guessResult.hint.correct_positions }} 个位置正确
+          <!-- Guess Result -->
+          <div v-if="guessResult && !guessResult.is_correct" class="card bg-base-200 mb-6">
+            <div class="card-body p-4">
+              <p class="mb-4">{{ guessResult.message }}</p>
+              <div class="flex gap-3 justify-center flex-wrap">
+                <div class="badge badge-lg badge-success gap-2">
+                  <i class="i-lucide-circle-check" />
+                  {{ guessResult.hint.correct_chars }} 个字符正确
+                </div>
+                <div class="badge badge-lg badge-info gap-2">
+                  <i class="i-lucide-target" />
+                  {{ guessResult.hint.correct_positions }} 个位置正确
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Right column: History and Leaderboard -->
-      <div class="space-y-8">
-        <!-- Guess history -->
-        <div v-if="guesses.length > 0" class="card bg-base-100">
-          <div class="card-body p-0">
-            <div class="px-6 pt-6 pb-4 border-b border-base-300">
-              <h2 class="card-title text-lg">猜测历史 ({{ guesses.length }})</h2>
-            </div>
-            <div class="max-h-[400px] overflow-y-auto">
-              <table class="table table-zebra table-sm">
-                <thead class="sticky top-0 bg-base-100">
-                  <tr>
-                    <th class="py-3">猜测</th>
-                    <th class="hidden sm:table-cell py-3">时间</th>
-                    <th class="py-3">提示</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(g, idx) in guesses" :key="idx" :class="{ 'opacity-50': g.is_after_expiry }">
-                    <td class="font-mono font-medium">{{ g.guess_answer }}</td>
-                    <td class="hidden sm:table-cell text-sm opacity-70">{{ formatDate(g.guessed_at) }}</td>
-                  >
-                    <td>
-                      <div v-if="!g.is_correct" class="flex gap-1 flex-wrap">
-                        <span v-if="g.correct_chars !== undefined" class="badge badge-success text-xs">
-                          {{ g.correct_chars }} 字符
-                        </span>
-                        <span v-if="g.correct_positions !== undefined" class="badge badge-info text-xs">
-                          {{ g.correct_positions }} 位置
-                        </span>
-                        <span v-if="g.is_after_expiry" class="badge badge-ghost text-xs">过期</span>
-                      </div>
-                      <i v-else class="i-mdi-check-circle text-success text-lg"></i>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          <!-- Guess History -->
+          <div v-if="guesses.length > 0" class="mb-6">
+            <h3 class="font-semibold mb-3">猜测历史 ({{ guesses.length }})</h3>
+            <div class="card bg-base-200">
+              <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm">
+                  <thead>
+                    <tr>
+                      <th class="py-3">猜测</th>
+                      <th class="hidden sm:table-cell py-3">时间</th>
+                      <th class="py-3">提示</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(g, idx) in guesses" :key="idx" :class="{ 'opacity-50': g.is_after_expiry }">
+                      <td class="font-mono">{{ g.guess_answer }}</td>
+                      <td class="hidden sm:table-cell text-sm opacity-70">{{ formatDate(g.guessed_at) }}</td>
+                      <td>
+                        <div v-if="!g.is_correct" class="flex gap-1 flex-wrap">
+                          <span v-if="g.correct_chars !== undefined" class="badge badge-success text-xs">
+                            {{ g.correct_chars }} 字符
+                          </span>
+                          <span v-if="g.correct_positions !== undefined" class="badge badge-info text-xs">
+                            {{ g.correct_positions }} 位置
+                          </span>
+                        </div>
+                        <i v-else class="i-lucide-circle-check text-success"></i>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Leaderboard -->
-        <div v-if="leaderboard.length > 0" class="card bg-base-100">
-          <div class="card-body p-0">
-            <div class="px-6 pt-6 pb-4 border-b border-base-300">
-              <h2 class="card-title text-lg">成功排行榜</h2>
-            </div>
-            <div class="max-h-[300px] overflow-y-auto">
-              <table class="table table-zebra table-sm">
-                <thead class="sticky top-0 bg-base-100">
-                  <tr>
-                    <th class="py-3">排名</th>
-                    <th class="py-3">用户</th>
-                    <th class="py-3">用时</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(entry, index) in leaderboard" :key="entry.user_id">
-                    <td>
-                      <span v-if="index === 0" class="text-xl">🥇</span>
-                      <span v-else-if="index === 1" class="text-xl">🥈</span>
-                      <span v-else-if="index === 2" class="text-xl">🥉</span>
-                      <span v-else class="badge badge-ghost text-sm">#{{ index + 1 }}</span>
-                    </td>
-                    <td class="font-semibold">{{ entry.username }}</td>
-                    <td>{{ formatTime(entry.time_to_solve) }}</td>
-                  </tr>
-                </tbody>
-              </table>
+          <!-- Leaderboard -->
+          <div v-if="leaderboard.length > 0">
+            <h3 class="font-semibold mb-3">成功排行榜</h3>
+            <div class="card bg-base-200">
+              <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                  <thead>
+                    <tr>
+                      <th class="py-3">排名</th>
+                      <th class="py-3">用户</th>
+                      <th class="py-3">用时</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(entry, index) in leaderboard" :key="entry.user_id">
+                      <td>
+                        <span v-if="index === 0" class="text-xl">🥇</span>
+                        <span v-else-if="index === 1" class="text-xl">🥈</span>
+                        <span v-else-if="index === 2" class="text-xl">🥉</span>
+                        <span v-else class="badge badge-ghost text-sm">#{{ index + 1 }}</span>
+                      </td>
+                      <td class="font-semibold">{{ entry.username }}</td>
+                      <td>{{ formatTime(entry.time_to_solve) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- No solves yet -->
-        <div v-else-if="!hasSolved" class="alert alert-ghost text-center">
-          <i class="i-mdi-information" />
-          <span>还没有人猜出这个谜题</span>
+          <div v-else-if="!hasSolved" class="alert alert-ghost text-center">
+            <i class="i-lucide-info" />
+            <span>还没有人猜出这个谜题</span>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   </div>
 </template>

@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
 import { getR2ImageUrl } from '../constants'
+import ShareModal from '../components/ShareModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -10,6 +11,10 @@ const authStore = useAuthStore()
 const puzzles = ref<any[]>([])
 const loading = ref(true)
 const error = ref('')
+
+// Share modal state
+const showShareModal = ref(false)
+const sharePuzzleId = ref('')
 
 // Delete confirmation state
 const showDeleteModal = ref(false)
@@ -62,6 +67,12 @@ function viewStats(puzzleId: string) {
   router.push(`/puzzle/${puzzleId}/stats`)
 }
 
+// Share puzzle
+function sharePuzzle(puzzleId: string) {
+  sharePuzzleId.value = puzzleId
+  showShareModal.value = true
+}
+
 // Show delete confirmation
 function confirmDelete(puzzleId: string) {
   puzzleToDelete.value = puzzleId
@@ -101,6 +112,12 @@ async function deletePuzzle() {
   }
 }
 
+// Close share modal
+function closeShareModal() {
+  showShareModal.value = false
+  sharePuzzleId.value = ''
+}
+
 onMounted(() => {
   loadMyPuzzles()
 })
@@ -115,7 +132,7 @@ onMounted(() => {
         <p class="text-base-content/60 mt-2">管理你创建的所有谜题</p>
       </div>
       <button class="btn btn-primary gap-2" @click="router.push('/create')">
-        <i class="i-mdi-plus" />
+        <i class="i-lucide-plus" />
         <span class="hidden sm:inline">创建新谜题</span>
       </button>
     </div>
@@ -130,19 +147,19 @@ onMounted(() => {
 
     <!-- Error -->
     <div v-else-if="error" class="alert alert-error">
-      <i class="i-mdi-alert-circle" />
+      <i class="i-lucide-alert-circle" />
       <span>{{ error }}</span>
     </div>
 
     <!-- Empty state -->
     <div v-else-if="puzzles.length === 0" class="text-center py-24">
       <div class="w-20 h-20 rounded-full bg-base-300/30 flex items-center justify-center mx-auto mb-8">
-        <i class="i-mdi-puzzle-outline text-4xl text-base-content/30" />
+        <i class="i-lucide-puzzle text-4xl text-base-content/30" />
       </div>
       <h2 class="text-2xl font-bold mb-3 font-display">还没有谜题</h2>
       <p class="text-base-content/60 mb-8">创建你的第一个谜题吧！</p>
       <button class="btn btn-primary btn-lg gap-2" @click="router.push('/create')">
-        <i class="i-mdi-plus" />
+        <i class="i-lucide-plus" />
         创建谜题
       </button>
     </div>
@@ -160,8 +177,11 @@ onMounted(() => {
         <div class="card-body">
           <div class="flex items-center justify-between text-sm mb-4">
             <span class="text-base-content/60">{{ formatDate(puzzle.created_at) }}</span>
-            <span v-if="puzzle.expires_at" class="badge badge-ghost text-xs">限时</span>
-            <span v-else class="badge badge-ghost text-xs">永久</span>
+            <div class="flex gap-1">
+              <span v-if="puzzle.hint" class="badge badge-warning badge-xs">有提示</span>
+              <span v-if="puzzle.expires_at" class="badge badge-ghost badge-xs">限时</span>
+              <span v-else class="badge badge-ghost badge-xs">永久</span>
+            </div>
           </div>
 
           <div class="flex gap-4 mb-6">
@@ -176,25 +196,37 @@ onMounted(() => {
           </div>
 
           <div class="card-actions justify-end gap-2 mt-2">
-            <button class="btn btn-ghost btn-sm" @click="viewPuzzle(puzzle.id)">
-              <i class="i-mdi-eye-outline" />
-              查看
+            <button class="btn btn-ghost btn-sm" @click="viewPuzzle(puzzle.id)" title="查看">
+              <i class="i-lucide-eye" />
             </button>
-            <button class="btn btn-primary btn-sm" @click="viewStats(puzzle.id)">
-              <i class="i-mdi-chart-bar" />
-              统计
+            <button
+              class="btn btn-primary btn-sm"
+              @click="sharePuzzle(puzzle.id)"
+              title="分享"
+            >
+              <i class="i-lucide-share-2" />
+            </button>
+            <button class="btn btn-ghost btn-sm" @click="viewStats(puzzle.id)" title="统计">
+              <i class="i-lucide-bar-chart-2" />
             </button>
             <button
               class="btn btn-error btn-sm gap-1"
               @click="confirmDelete(puzzle.id)"
+              title="删除"
             >
-              <i class="i-mdi-delete" />
-              <span class="hidden sm:inline">删除</span>
+              <i class="i-lucide-trash-2" />
             </button>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Share Modal -->
+    <ShareModal
+      :show="showShareModal"
+      :puzzle-id="sharePuzzleId"
+      @close="closeShareModal"
+    />
 
     <!-- Delete confirmation modal -->
     <dialog
@@ -210,7 +242,7 @@ onMounted(() => {
           </button>
           <button class="btn btn-error gap-2" @click="deletePuzzle" :disabled="deleteLoading">
             <span v-if="deleteLoading" class="loading loading-spinner loading-sm"></span>
-            <i class="i-mdi-delete" />
+            <i class="i-lucide-trash-2" />
             确认删除
           </button>
         </div>

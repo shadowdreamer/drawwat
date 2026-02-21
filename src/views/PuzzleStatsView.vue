@@ -66,7 +66,7 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex items-center gap-3 mb-10">
       <button class="btn btn-ghost btn-sm btn-circle" @click="router.back()">
-        <i class="i-mdi-arrow-left" />
+        <i class="i-lucide-arrow-left" />
       </button>
       <h1 class="text-2xl sm:text-3xl font-bold font-display">谜题统计</h1>
     </div>
@@ -81,7 +81,7 @@ onMounted(() => {
 
     <!-- Error -->
     <div v-else-if="error" class="alert alert-error">
-      <i class="i-mdi-alert-circle" />
+      <i class="i-lucide-alert-circle" />
       <span>{{ error }}</span>
     </div>
 
@@ -152,7 +152,7 @@ onMounted(() => {
       </div>
 
       <div v-else class="alert alert-ghost">
-        <i class="i-mdi-information" />
+        <i class="i-lucide-info" />
         <span>还没有人猜出这个谜题</span>
       </div>
     </div>

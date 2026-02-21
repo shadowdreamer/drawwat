@@ -139,6 +139,7 @@ puzzleRoute.post('/puzzles', authMiddleware, async (c) => {
 // GET /api/puzzles/:id - Get puzzle details (without answer)
 puzzleRoute.get('/puzzles/:id', async (c) => {
   const puzzleId = c.req.param('id')
+  const showHint = c.req.query('hint') === 'true'
   const db = c.env.MISC_DB
 
   const puzzle = await db
@@ -155,7 +156,7 @@ puzzleRoute.get('/puzzles/:id', async (c) => {
   return c.json({
     id: (puzzle as any).id,
     image_url: (puzzle as any).image_url,
-    hint: (puzzle as any).hint,
+    hint: showHint ? (puzzle as any).hint : null,
     is_expired: expired,
     expires_at: (puzzle as any).expires_at,
     created_at: (puzzle as any).created_at
