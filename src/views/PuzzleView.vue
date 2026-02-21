@@ -49,6 +49,16 @@ const hasSolved = computed(() => {
   return guesses.value.some((g: any) => g.is_correct)
 })
 
+// Check if current user is the creator
+const isCreator = computed(() => {
+  return authStore.user?.id === puzzle.value?.creator?.id
+})
+
+// Check if user can guess (not creator and not solved)
+const canGuess = computed(() => {
+  return !isCreator.value && !hasSolved.value
+})
+
 // Format date
 function formatDate(dateString: string) {
   const date = new Date(dateString)
@@ -302,7 +312,7 @@ onMounted(() => {
           </div>
 
           <!-- Guess Input -->
-          <div v-if="!hasSolved || !showAnswer" class="px-6 py-4 border-b border-base-300">
+          <div v-if="canGuess && (!hasSolved || !showAnswer)" class="px-6 py-4 border-b border-base-300">
             <div class="form-control">
               <label class="label py-1">
                 <span class="label-text font-medium">输入你的答案</span>
@@ -325,6 +335,21 @@ onMounted(() => {
               <i class="i-lucide-send" />
               提交猜测
             </button>
+          </div>
+
+          <!-- Creator/Solved Message -->
+          <div v-else-if="isCreator" class="px-6 py-4 border-b border-base-300 text-center">
+            <p class="text-sm text-base-content/60">
+              <i class="i-lucide-info mr-1" />
+              这是你创建的题目，不能作答
+            </p>
+          </div>
+
+          <div v-else-if="hasSolved" class="px-6 py-4 border-b border-base-300 text-center">
+            <p class="text-sm text-success font-medium">
+              <i class="i-lucide-circle-check mr-1" />
+              你已经猜对了这个谜题！
+            </p>
           </div>
 
           <!-- Last Guess Result -->
@@ -513,7 +538,7 @@ onMounted(() => {
           </div>
 
           <!-- Guess Input -->
-          <div v-if="!hasSolved || !showAnswer" class="mb-6">
+          <div v-if="canGuess && (!hasSolved || !showAnswer)" class="mb-6">
             <div class="form-control">
               <label class="label">
                 <span class="label-text font-medium">输入你的答案</span>
@@ -532,7 +557,7 @@ onMounted(() => {
               :disabled="!guess.trim() || submitting"
               @click="submitGuess"
             >
-              <span v-if="submitting" class="loading loading-spinner"></span>
+              <span v-if="submitting" class="loading loading-spinner loading-sm"></span>
               <i class="i-lucide-send" />
               提交猜测
             </button>

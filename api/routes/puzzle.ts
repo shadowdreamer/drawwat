@@ -289,6 +289,11 @@ puzzleRoute.post('/puzzles/:id/guess', authMiddleware, zValidator('json', guessS
     return c.json({ error: 'Puzzle not found' }, 404)
   }
 
+  // Check if user is the creator
+  if ((puzzle as any).user_id === userId) {
+    return c.json({ error: '不能回答自己创建的题目' }, 403)
+  }
+
   const answer = (puzzle as any).answer
   const caseSensitive = (puzzle as any).case_sensitive === 1
   const expired = isExpired((puzzle as any).expires_at)
