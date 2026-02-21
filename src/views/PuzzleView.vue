@@ -185,8 +185,10 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Desktop: Side by Side Layout -->
-    <div v-else-if="puzzle" class="hidden lg:flex h-[calc(100vh-4rem)]">
+    <!-- Puzzle Content -->
+    <div v-if="puzzle">
+      <!-- Desktop: Side by Side Layout -->
+      <div class="hidden lg:flex h-[calc(100vh-4rem)]">
       <!-- Left: Image Area -->
       <div class="flex-1 flex flex-col bg-base-300/30">
         <!-- Image Header -->
@@ -376,7 +378,7 @@ onMounted(() => {
     </div>
 
     <!-- Mobile: Vertical Layout -->
-    <div v-else-if="puzzle" class="lg:hidden">
+    <div class="lg:hidden">
       <!-- Image Section -->
       <section class="bg-base-300/30">
         <div class="flex items-center justify-between px-4 py-3 bg-base-100/80 backdrop-blur-sm border-b border-base-300">
@@ -546,6 +548,7 @@ onMounted(() => {
           </div>
         </div>
       </section>
+    </div>
     </div>
   </div>
 </template>
