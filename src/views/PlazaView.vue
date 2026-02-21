@@ -28,7 +28,7 @@ async function loadPublicPuzzles() {
   error.value = ''
 
   try {
-    const response = await fetch('/api/puzzles/public')
+    const response = await fetch('/api/public-puzzles')
 
     if (!response.ok) {
       throw new Error('加载失败')
