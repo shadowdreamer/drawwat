@@ -11,6 +11,12 @@ const router = createRouter({
       meta: { title: 'DrawWat - 图片谜题猜谜' }
     },
     {
+      path: '/plaza',
+      name: 'plaza',
+      component: () => import('../views/PlazaView.vue'),
+      meta: { title: '谜题广场' }
+    },
+    {
       path: '/auth/callback',
       name: 'auth-callback',
       component: () => import('../views/AuthCallbackView.vue'),
