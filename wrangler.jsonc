@@ -17,6 +17,11 @@
 	"observability": {
 		"enabled": true
 	},
+	"vars":{
+		"VITE_BGM_REDIRECT_URI":"",
+		"VITE_BGM_CLIENT_ID":"",
+		"BGM_APP_SECRET":"",
+	},
 	"d1_databases": [
     {
       "binding": "MISC_DB",
