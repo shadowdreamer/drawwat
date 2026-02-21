@@ -294,6 +294,16 @@ puzzleRoute.post('/puzzles/:id/guess', authMiddleware, zValidator('json', guessS
     return c.json({ error: '不能回答自己创建的题目' }, 403)
   }
 
+  // Check if user has given up
+  const giveUpRecord = await db
+    .prepare('SELECT * FROM puzzle_gives_up WHERE puzzle_id = ? AND user_id = ?')
+    .bind(puzzleId, userId)
+    .first()
+
+  if (giveUpRecord) {
+    return c.json({ error: '你已经放弃此题，无法提交答案' }, 403)
+  }
+
   const answer = (puzzle as any).answer
   const caseSensitive = (puzzle as any).case_sensitive === 1
   const expired = isExpired((puzzle as any).expires_at)
@@ -473,6 +483,106 @@ puzzleRoute.get('/puzzles/:id/wrong-guesses', async (c) => {
   return c.json({
     wrong_guesses: results,
     total_wrong_guesses: results.length
+  })
+})
+
+// POST /api/puzzles/:id/give-up - Give up on a puzzle
+puzzleRoute.post('/puzzles/:id/give-up', authMiddleware, async (c) => {
+  const puzzleId = c.req.param('id')
+  const userId = c.get('userId')
+  const db = c.env.MISC_DB
+
+  // Check if puzzle exists
+  const puzzle = await db
+    .prepare('SELECT * FROM puzzles WHERE id = ?')
+    .bind(puzzleId)
+    .first()
+
+  if (!puzzle) {
+    return c.json({ error: 'Puzzle not found' }, 404)
+  }
+
+  // Check if user is the creator
+  if ((puzzle as any).user_id === userId) {
+    return c.json({ error: '不能放弃自己创建的题目' }, 403)
+  }
+
+  // Check if already solved
+  const existingSolve = await db
+    .prepare('SELECT * FROM puzzle_solves WHERE puzzle_id = ? AND user_id = ?')
+    .bind(puzzleId, userId)
+    .first()
+
+  if (existingSolve) {
+    return c.json({ error: '你已经猜对了，不能放弃' }, 400)
+  }
+
+  // Check if already gave up
+  const existingGiveUp = await db
+    .prepare('SELECT * FROM puzzle_gives_up WHERE puzzle_id = ? AND user_id = ?')
+    .bind(puzzleId, userId)
+    .first()
+
+  if (existingGiveUp) {
+    return c.json({ error: '已经放弃过了' }, 400)
+  }
+
+  // Create give up record
+  const giveUpId = crypto.randomUUID()
+  await db.prepare(`
+    INSERT INTO puzzle_gives_up (id, puzzle_id, user_id, gave_up_at)
+    VALUES (?, ?, ?, ?)
+  `).bind(
+    giveUpId,
+    puzzleId,
+    userId,
+    new Date().toISOString()
+  ).run()
+
+  return c.json({ success: true })
+})
+
+// GET /api/puzzles/:id/gave-up - Get users who gave up
+puzzleRoute.get('/puzzles/:id/gave-up', async (c) => {
+  const puzzleId = c.req.param('id')
+  const db = c.env.MISC_DB
+
+  const gaveUpUsers = await db
+    .prepare(`
+      SELECT
+        u.id as user_id,
+        u.username,
+        u.provider,
+        u.avatar_url,
+        pg.gave_up_at
+      FROM puzzle_gives_up pg
+      JOIN users u ON pg.user_id = u.id
+      WHERE pg.puzzle_id = ?
+      ORDER BY pg.gave_up_at ASC
+    `)
+    .bind(puzzleId)
+    .all()
+
+  const results = gaveUpUsers.results || []
+  return c.json({
+    gave_up_users: results,
+    total: results.length
+  })
+})
+
+// GET /api/puzzles/:id/give-up-status - Check if current user gave up
+puzzleRoute.get('/puzzles/:id/give-up-status', authMiddleware, async (c) => {
+  const puzzleId = c.req.param('id')
+  const userId = c.get('userId')
+  const db = c.env.MISC_DB
+
+  const giveUpRecord = await db
+    .prepare('SELECT * FROM puzzle_gives_up WHERE puzzle_id = ? AND user_id = ?')
+    .bind(puzzleId, userId)
+    .first()
+
+  return c.json({
+    has_given_up: !!giveUpRecord
   })
 })
 

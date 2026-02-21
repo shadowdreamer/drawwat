@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/auth'
 import { getR2ImageUrl } from '../constants'
 import { createBangumiIdResolver, type BangumiIdResolver } from '../utils/bangumi'
 import WrongGuessesList from '../components/WrongGuessesList.vue'
+import GaveUpList from '../components/GaveUpList.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -33,6 +34,11 @@ const leaderboard = ref<any[]>([])
 const showAnswer = ref(false)
 const correctAnswer = ref('')
 
+// Give up state
+const hasGivenUp = ref(false)
+const givingUp = ref(false)
+const showGiveUpModal = ref(false)
+
 // Create resolver map for bangumi users
 const resolverMap = ref<Map<string, BangumiIdResolver>>(new Map())
 
@@ -55,9 +61,9 @@ const isCreator = computed(() => {
   return authStore.user?.id === puzzle.value?.creator?.id
 })
 
-// Check if user can guess (not creator and not solved)
+// Check if user can guess (not creator and not solved and not gave up)
 const canGuess = computed(() => {
-  return !isCreator.value && !hasSolved.value
+  return !isCreator.value && !hasSolved.value && !hasGivenUp.value
 })
 
 // Format date
@@ -84,12 +90,15 @@ async function loadPuzzle() {
   error.value = ''
 
   try {
-    const [puzzleRes, guessesRes, solvesRes] = await Promise.all([
+    const [puzzleRes, guessesRes, solvesRes, giveUpStatusRes] = await Promise.all([
       fetch(`/api/puzzles/${puzzleId.value}`),
       fetch(`/api/puzzles/${puzzleId.value}/guesses`, {
         headers: { 'Authorization': `Bearer ${authStore.token}` }
       }),
-      fetch(`/api/puzzles/${puzzleId.value}/solves`)
+      fetch(`/api/puzzles/${puzzleId.value}/solves`),
+      fetch(`/api/puzzles/${puzzleId.value}/give-up-status`, {
+        headers: { 'Authorization': `Bearer ${authStore.token}` }
+      }).catch(() => null)
     ])
 
     if (!puzzleRes.ok) {
@@ -111,11 +120,53 @@ async function loadPuzzle() {
       const solvesData = await solvesRes.json()
       leaderboard.value = solvesData.solves || []
     }
+
+    // Check give up status
+    if (giveUpStatusRes?.ok) {
+      const giveUpData = await giveUpStatusRes.json()
+      hasGivenUp.value = giveUpData.has_given_up || false
+    }
   } catch (err: unknown) {
     error.value = err instanceof Error ? err.message : '加载失败'
   } finally {
     loading.value = false
   }
+}
+
+// Give up on puzzle
+function giveUp() {
+  if (givingUp.value) return
+  showGiveUpModal.value = true
+}
+
+async function confirmGiveUp() {
+  givingUp.value = true
+  showGiveUpModal.value = false
+
+  try {
+    const response = await fetch(`/api/puzzles/${puzzleId.value}/give-up`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authStore.token}`
+      }
+    })
+
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.error || '操作失败')
+    }
+
+    hasGivenUp.value = true
+  } catch (err: unknown) {
+    error.value = err instanceof Error ? err.message : '操作失败'
+  } finally {
+    givingUp.value = false
+  }
+}
+
+function cancelGiveUp() {
+  showGiveUpModal.value = false
 }
 
 // Submit guess
@@ -327,15 +378,25 @@ onMounted(() => {
                 @keydown="handleKeydown"
               />
             </div>
-            <button
-              class="btn btn-primary w-full mt-3 gap-2"
-              :disabled="!guess.trim() || submitting"
-              @click="submitGuess"
-            >
-              <span v-if="submitting" class="loading loading-spinner loading-sm"></span>
-              <i class="i-lucide-send" />
-              提交猜测
-            </button>
+            <div class="flex gap-2 mt-3">
+              <button
+                class="btn btn-primary flex-1 gap-2"
+                :disabled="!guess.trim() || submitting"
+                @click="submitGuess"
+              >
+                <span v-if="submitting" class="loading loading-spinner loading-sm"></span>
+                <i class="i-lucide-send" />
+                提交猜测
+              </button>
+              <button
+                class="btn btn-ghost gap-2"
+                :disabled="givingUp"
+                @click="giveUp"
+              >
+                <i class="i-lucide-flag" />
+                放弃
+              </button>
+            </div>
           </div>
 
           <!-- Creator/Solved Message -->
@@ -350,6 +411,13 @@ onMounted(() => {
             <p class="text-sm text-success font-medium">
               <i class="i-lucide-circle-check mr-1" />
               你已经猜对了这个谜题！
+            </p>
+          </div>
+
+          <div v-else-if="hasGivenUp" class="px-6 py-4 border-b border-base-300 text-center">
+            <p class="text-sm text-warning font-medium">
+              <i class="i-lucide-flag mr-1" />
+              你已经放弃了这个谜题
             </p>
           </div>
 
@@ -461,6 +529,11 @@ onMounted(() => {
           <div class="px-4 pb-4">
             <WrongGuessesList :puzzle-id="puzzleId" />
           </div>
+
+          <!-- Gave Up List -->
+          <div class="px-4 pb-4">
+            <GaveUpList :puzzle-id="puzzleId" />
+          </div>
         </div>
       </div>
     </div>
@@ -558,15 +631,25 @@ onMounted(() => {
                 @keydown="handleKeydown"
               />
             </div>
-            <button
-              class="btn btn-primary w-full mt-3 gap-2"
-              :disabled="!guess.trim() || submitting"
-              @click="submitGuess"
-            >
-              <span v-if="submitting" class="loading loading-spinner loading-sm"></span>
-              <i class="i-lucide-send" />
-              提交猜测
-            </button>
+            <div class="flex gap-2 mt-3">
+              <button
+                class="btn btn-primary flex-1 gap-2"
+                :disabled="!guess.trim() || submitting"
+                @click="submitGuess"
+              >
+                <span v-if="submitting" class="loading loading-spinner loading-sm"></span>
+                <i class="i-lucide-send" />
+                提交猜测
+              </button>
+              <button
+                class="btn btn-ghost gap-2"
+                :disabled="givingUp"
+                @click="giveUp"
+              >
+                <i class="i-lucide-flag" />
+                放弃
+              </button>
+            </div>
           </div>
 
           <!-- Guess Result -->
@@ -678,9 +761,34 @@ onMounted(() => {
           <div class="mt-4">
             <WrongGuessesList :puzzle-id="puzzleId" />
           </div>
+
+          <!-- Gave Up List -->
+          <div class="mt-4">
+            <GaveUpList :puzzle-id="puzzleId" />
+          </div>
         </div>
       </section>
     </div>
     </div>
+
+    <!-- Give Up Confirmation Modal -->
+    <dialog
+      :class="['modal', { 'modal-open': showGiveUpModal }]"
+    >
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">确认放弃</h3>
+        <p class="py-4">放弃后将无法再提交答案，确定要放弃吗？</p>
+        <div class="modal-action">
+          <button class="btn btn-ghost" @click="cancelGiveUp">再想想</button>
+          <button class="btn btn-warning" :disabled="givingUp" @click="confirmGiveUp">
+            <span v-if="givingUp" class="loading loading-spinner loading-sm"></span>
+            确认放弃
+          </button>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop" @click="cancelGiveUp">
+        <button>close</button>
+      </form>
+    </dialog>
   </div>
 </template>
