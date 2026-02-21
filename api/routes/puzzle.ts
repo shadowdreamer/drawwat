@@ -446,6 +446,18 @@ puzzleRoute.get('/puzzles/:id/solves', async (c) => {
 puzzleRoute.get('/public-puzzles', async (c) => {
   const db = c.env.MISC_DB
 
+  // Parse pagination parameters
+  const page = parseInt(c.req.query('page') || '1')
+  const pageSize = parseInt(c.req.query('pageSize') || '20')
+  const offset = (page - 1) * pageSize
+
+  // Get total count
+  const countResult = await db
+    .prepare('SELECT COUNT(*) as total FROM puzzles WHERE is_public = 1')
+    .first()
+  const total = (countResult as any)?.total || 0
+
+  // Get paginated puzzles
   const puzzles = await db
     .prepare(`
       SELECT
@@ -464,8 +476,9 @@ puzzleRoute.get('/public-puzzles', async (c) => {
       WHERE p.is_public = 1
       GROUP BY p.id
       ORDER BY p.created_at DESC
-      LIMIT 20
+      LIMIT ? OFFSET ?
     `)
+    .bind(pageSize, offset)
     .all()
 
   const results = puzzles.results || []
@@ -506,7 +519,10 @@ puzzleRoute.get('/public-puzzles', async (c) => {
       solves_count: p.solves_count || 0,
       guesses_count: guessCounts[p.id] || 0
     })),
-    total: results.length
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize)
   })
 })
 
