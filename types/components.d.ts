@@ -14,5 +14,6 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     ShareModal: typeof import('./../src/components/ShareModal.vue')['default']
     TldrawCanvas: typeof import('./../src/components/TldrawCanvas.vue')['default']
+    WrongGuessesList: typeof import('./../src/components/WrongGuessesList.vue')['default']
   }
 }

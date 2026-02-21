@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '../store/auth'
 import { getR2ImageUrl } from '../constants'
 import { createBangumiIdResolver, type BangumiIdResolver } from '../utils/bangumi'
+import WrongGuessesList from '../components/WrongGuessesList.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -455,6 +456,11 @@ onMounted(() => {
             <i class="i-lucide-info text-base-content/40 text-3xl mb-2" />
             <p class="text-sm text-base-content/60">还没有人猜出这个谜题</p>
           </div>
+
+          <!-- Wrong Guesses List -->
+          <div class="px-4 pb-4">
+            <WrongGuessesList :puzzle-id="puzzleId" />
+          </div>
         </div>
       </div>
     </div>
@@ -666,6 +672,11 @@ onMounted(() => {
           <div v-else-if="!hasSolved" class="alert alert-ghost text-center">
             <i class="i-lucide-info" />
             <span>还没有人猜出这个谜题</span>
+          </div>
+
+          <!-- Wrong Guesses List -->
+          <div class="mt-4">
+            <WrongGuessesList :puzzle-id="puzzleId" />
           </div>
         </div>
       </section>

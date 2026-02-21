@@ -449,6 +449,33 @@ puzzleRoute.get('/puzzles/:id/solves', async (c) => {
   })
 })
 
+// GET /api/puzzles/:id/wrong-guesses - Get wrong answers statistics
+puzzleRoute.get('/puzzles/:id/wrong-guesses', async (c) => {
+  const puzzleId = c.req.param('id')
+  const db = c.env.MISC_DB
+
+  // Get wrong guesses with count, ordered by count desc
+  const wrongGuesses = await db
+    .prepare(`
+      SELECT
+        guess_answer,
+        COUNT(*) as count
+      FROM guesses
+      WHERE puzzle_id = ? AND is_correct = 0
+      GROUP BY guess_answer
+      ORDER BY count DESC
+      LIMIT 50
+    `)
+    .bind(puzzleId)
+    .all()
+
+  const results = wrongGuesses.results || []
+  return c.json({
+    wrong_guesses: results,
+    total_wrong_guesses: results.length
+  })
+})
+
 // GET /api/public-puzzles - Get public puzzles (no auth required)
 puzzleRoute.get('/public-puzzles', async (c) => {
   const db = c.env.MISC_DB
