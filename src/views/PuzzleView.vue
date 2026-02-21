@@ -308,7 +308,7 @@ onMounted(() => {
             <div class="px-6 py-3 border-b border-base-300 bg-base-200/50">
               <h3 class="font-semibold text-sm">猜测历史 ({{ guesses.length }})</h3>
             </div>
-            <div class="max-h-48 overflow-y-auto">
+            <div class="max-h-[50vh] overflow-y-auto">
               <table class="table table-zebra table-sm">
                 <thead class="sticky top-0 bg-base-100">
                   <tr>
@@ -343,7 +343,7 @@ onMounted(() => {
             <div class="px-6 py-3 border-b border-base-300 bg-base-200/50">
               <h3 class="font-semibold text-sm">成功排行榜</h3>
             </div>
-            <div class="max-h-48 overflow-y-auto">
+            <div class="max-h-[50vh] overflow-y-auto">
               <table class="table table-zebra table-sm">
                 <thead class="sticky top-0 bg-base-100">
                   <tr>

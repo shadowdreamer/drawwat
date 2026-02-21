@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
+import { createBangumiIdResolver, type BangumiIdResolver } from '../utils/bangumi'
 
 const route = useRoute()
 const router = useRouter()
@@ -11,6 +12,18 @@ const puzzleId = computed(() => route.params.id as string)
 const stats = ref<any>(null)
 const loading = ref(true)
 const error = ref('')
+
+// Create resolver map for bangumi users
+const resolverMap = ref<Map<string, BangumiIdResolver>>(new Map())
+
+function getResolver(username: string, provider: string): BangumiIdResolver | null {
+  if (provider !== 'bangumi') return null
+
+  if (!resolverMap.value.has(username)) {
+    resolverMap.value.set(username, createBangumiIdResolver(username))
+  }
+  return resolverMap.value.get(username)!
+}
 
 // Format date
 function formatDate(dateString: string) {
@@ -141,7 +154,25 @@ onMounted(() => {
                     <span v-else-if="index === 2" class="text-xl">🥉</span>
                     <span v-else class="badge badge-ghost text-sm">#{{ index + 1 }}</span>
                   </td>
-                  <td class="font-semibold">{{ entry.username }}</td>
+                  <td>
+                    <div class="flex items-center gap-3">
+                      <div class="avatar placeholder">
+                        <div class="bg-neutral text-neutral-content rounded-full w-8 h-8">
+                          <img
+                            v-if="entry.avatar_url"
+                            :src="entry.avatar_url"
+                            :alt="entry.username"
+                          />
+                          <span v-else class="text-xs font-semibold">
+                            {{ getResolver(entry.username, entry.provider)?.nickname?.[0]?.toUpperCase() || entry.username?.[0]?.toUpperCase() || '?' }}
+                          </span>
+                        </div>
+                      </div>
+                      <span class="font-semibold">
+                        {{ getResolver(entry.username, entry.provider)?.isResolved ? getResolver(entry.username, entry.provider)?.nickname : entry.username }}
+                      </span>
+                    </div>
+                  </td>
                   <td class="hidden sm:table-cell text-sm opacity-70">{{ formatDate(entry.solved_at) }}</td>
                   <td>{{ formatTime(entry.time_to_solve) }}</td>
                 </tr>
