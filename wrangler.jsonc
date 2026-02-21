@@ -17,10 +17,6 @@
 	"observability": {
 		"enabled": true
 	},
-	"env": {
-
-	},
-	"keep_vars": true,
 	"vars":{
 		"VITE_BGM_REDIRECT_URI":"https://draw.dovahkiin.top/auth/callback",
 		"VITE_BGM_CLIENT_ID":"bgm56036996d82b8c4bf",
