@@ -47,7 +47,8 @@ function handleLogout() {
     </label>
     <ul
       tabindex="0"
-      class="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-52 mt-2 gap-1"
+      class="dropdown-content z-[1] menu menu-sm p-2 shadow-xl bg-base-100 rounded-box w-52 mt-2 border border-base-300"
+      style="background-color: hsl(var(--b1));"
     >
       <li class="menu-title opacity-60">
         {{ authStore.user?.username }}

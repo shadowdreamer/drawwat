@@ -210,14 +210,6 @@ onMounted(() => {
             />
           </div>
         </div>
-
-        <!-- Hint Bar (bottom) -->
-        <div v-if="puzzle.hint" class="px-6 py-3 bg-info/10 border-t border-info/20 shrink-0">
-          <div class="flex items-center gap-2">
-            <i class="i-lucide-lightbulb text-info" />
-            <span class="text-sm">{{ puzzle.hint }}</span>
-          </div>
-        </div>
       </div>
 
       <!-- Right: Guess Panel -->
@@ -230,6 +222,14 @@ onMounted(() => {
 
         <!-- Scrollable Content -->
         <div class="flex-1 overflow-y-auto">
+          <!-- Hint -->
+          <div v-if="puzzle.hint?.trim()" class="mx-4 mt-4">
+            <div class="alert alert-info alert-sm py-2">
+              <i class="i-lucide-lightbulb text-sm" />
+              <span class="text-sm">{{ puzzle.hint }}</span>
+            </div>
+          </div>
+
           <!-- Success Alert -->
           <div v-if="hasSolved && !showAnswer" class="mx-4 mt-4">
             <div class="alert alert-success alert-sm py-2">
@@ -395,7 +395,7 @@ onMounted(() => {
             alt="谜题图片"
           />
         </div>
-        <div v-if="puzzle.hint" class="px-4 pb-4">
+        <div v-if="puzzle.hint?.trim()" class="px-4 pb-4">
           <div class="alert alert-info alert-sm py-2">
             <i class="i-lucide-lightbulb text-sm" />
             <span class="text-sm">{{ puzzle.hint }}</span>

@@ -38,6 +38,9 @@ authRoute.post('/auth', zValidator('json', authSchema), async (c) => {
   if (!code) {
     return c.json({ error: 'Missing authorization code' }, 400)
   }
+  if (!c.env.VITE_BGM_CLIENT_ID){
+    return c.json({ error: 'env error no VITE_BGM_CLIENT_ID' }, 400)
+  }
   const body = JSON.stringify({
       client_id: c.env.VITE_BGM_CLIENT_ID,
       client_secret: c.env.BGM_APP_SECRET,

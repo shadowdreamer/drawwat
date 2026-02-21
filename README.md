@@ -1,91 +1,51 @@
-# CF Worker Hono Vue3 Template
+# DrawWat
 
-A modern full-stack template project that combines Cloudflare Workers, Hono, Vue 3, UnoCSS, and DaisyUI for building powerful web applications with serverless architecture.
+一个有趣的猜谜游戏平台 - 在线作画，设置答案，和朋友一起猜谜。
 
-## Features
+![DrawWat](https://img.shields.io/badge/DrawWat-猜谜游戏-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-- **Frontend**: Vue 3 with TypeScript, Vite, and modern development tools
-- **Backend**: Hono framework running on Cloudflare Workers
-- **Styling**: UnoCSS with DaisyUI components for rapid UI development
-- **State Management**: Pinia with persistence support
-- **Routing**: Vue Router for SPA navigation
-- **Database**: Cloudflare D1 database support with migrations
-- **Deployment**: Optimized for Cloudflare Workers deployment
+## 网站地址
 
-## Tech Stack
+https://draw.dovahkiin.top/
 
-- **Runtime**: Cloudflare Workers
-- **Backend**: Hono
-- **Frontend**: Vue 3 + TypeScript
-- **Build Tool**: Vite
-- **CSS Framework**: UnoCSS + DaisyUI
-- **State Management**: Pinia
-- **Database**: Cloudflare D1
+## 功能特点
 
-## Getting Started
+- **在线作画** - 内置简单易用的画板工具，无需上传图片
+- **设置答案** - 为你的画作设置答案，可选添加提示语
+- **智能提示** - 类似 Wordle 的提示系统，显示正确字符数和位置数
+- **排行榜** - 记录最先答对的玩家
+- **分享链接** - 一键分享给朋友
 
-### Prerequisites
+## 技术栈
 
-- Node.js (v20.19.0 or v22.12.0+)
-- pnpm package manager
-- Cloudflare account with Workers enabled
+- **前端**: Vue 3 + TypeScript + Vite
+- **后端**: Hono (Cloudflare Workers)
+- **样式**: UnoCSS + DaisyUI
+- **状态管理**: Pinia
+- **数据库**: Cloudflare D1
+- **画板**: tldraw
 
-### Installation
+## 开发
 
-1. Clone this repository:
-   ```bash
-   git clone <repository-url>
-   cd cf-worker-hono-vue3-template
-   ```
-
-2. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-
-3. Set up your Cloudflare D1 database:
-   - Create a D1 database in your Cloudflare dashboard
-   - Update the `database_id` in `wrangler.jsonc`
-   - Run migrations:
-     ```bash
-     pnpm wrangler d1 migrations apply misc
-     ```
-
-### Development
-
-Start the development server:
 ```bash
+# 安装依赖
+pnpm install
+
+# 开发模式
 pnpm dev
-```
 
-### Build and Deploy
+# 构建
+pnpm build
 
-1. Build the project:
-   ```bash
-   pnpm build
-   ```
-
-2. Deploy to Cloudflare Workers:
-   ```bash
-   pnpm deploy
-   ```
-
-## Project Structure
-
-```
-├── api/                 # Backend API (Hono)
-│   ├── index.ts        # API entry point
-│   └── migrations/     # Database migrations
-├── public/             # Static assets
-├── src/                # Frontend source code
-│   ├── components/     # Vue components
-│   ├── views/          # Page components
-│   ├── stores/         # Pinia stores
-│   └── styles/         # CSS files
-├── types/              # TypeScript type definitions
-└── uno.config.ts       # UnoCSS configuration
+# 部署
+pnpm deploy
 ```
 
 ## License
 
 MIT
+
+---
+
+GitHub: https://github.com/shadowdreamer/drawwat

@@ -23,7 +23,7 @@ const showLogin = route.query.showLogin === 'true'
               DrawWat
             </h1>
             <p class="text-base sm:text-lg text-base-content/70 mb-8 leading-relaxed">
-              上传图片，设置答案，和朋友一起猜谜
+              在线作画，设置答案，和朋友一起猜谜
             </p>
 
             <!-- CTA Buttons -->
@@ -69,11 +69,11 @@ const showLogin = route.query.showLogin === 'true'
             <div class="card bg-base-100 border border-base-300 shadow-sm">
               <div class="card-body p-4 flex-row items-center gap-4">
                 <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <i class="i-lucide-image text-2xl text-primary" />
+                  <i class="i-lucide-pencil text-2xl text-primary" />
                 </div>
                 <div>
-                  <h3 class="font-semibold font-display">上传图片</h3>
-                  <p class="text-xs text-base-content/60">支持 JPG、PNG、WEBP</p>
+                  <h3 class="font-semibold font-display">在线作画</h3>
+                  <p class="text-xs text-base-content/60">简单易用的画板工具</p>
                 </div>
               </div>
             </div>
@@ -117,5 +117,18 @@ const showLogin = route.query.showLogin === 'true'
         </div>
       </div>
     </section>
+
+    <!-- GitHub Footer -->
+    <footer class="pb-4 text-center">
+      <a
+        href="https://github.com/shadowdreamer/drawwat"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="link link-hover link-opacity-50 text-base-content/40 text-sm flex items-center justify-center gap-1"
+      >
+        <i class="i-lucide-github text-xs" />
+        <span>GitHub</span>
+      </a>
+    </footer>
   </div>
 </template>
