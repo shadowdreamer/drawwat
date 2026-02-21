@@ -34,9 +34,8 @@ async function uploadImageToR2(
       contentType,
     },
   })
-  console.log("env.R2_CUSTOM_DOMAIN",env.R2_CUSTOM_DOMAIN)
-  // Return public URL
-  return `${env.R2_CUSTOM_DOMAIN}/${key}`
+  // Return R2 key (not full URL)
+  return key
 }
 
 // Helper function to calculate character matches
@@ -416,4 +415,35 @@ puzzleRoute.get('/puzzles/:id/solves', async (c) => {
     solves: solves.results,
     total_solves: solves.results.length
   })
+})
+
+// DELETE /api/puzzles/:id - Delete a puzzle (only for creator)
+puzzleRoute.delete('/puzzles/:id', authMiddleware, async (c) => {
+  const puzzleId = c.req.param('id')
+  const userId = c.get('userId')
+  const db = c.env.MISC_DB
+
+  // Check if user is the creator
+  const puzzle = await db
+    .prepare('SELECT * FROM puzzles WHERE id = ? AND user_id = ?')
+    .bind(puzzleId, userId)
+    .first()
+
+  if (!puzzle) {
+    return c.json({ error: 'Puzzle not found or forbidden' }, 404)
+  }
+
+  // Delete R2 image file
+  const imageKey = (puzzle as any).image_url
+  try {
+    await c.env.STATIC_BUCKET.delete(imageKey)
+  } catch (error) {
+    console.error('Failed to delete R2 file:', error)
+    // Continue with deletion even if R2 deletion fails
+  }
+
+  // Delete puzzle (cascades to guesses and puzzle_solves)
+  await db.prepare('DELETE FROM puzzles WHERE id = ?').bind(puzzleId).run()
+
+  return c.json({ success: true, message: 'Puzzle deleted successfully' })
 })

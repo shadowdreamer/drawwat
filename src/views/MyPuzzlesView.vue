@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
+import { getR2ImageUrl } from '../constants'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -9,6 +10,11 @@ const authStore = useAuthStore()
 const puzzles = ref<any[]>([])
 const loading = ref(true)
 const error = ref('')
+
+// Delete confirmation state
+const showDeleteModal = ref(false)
+const puzzleToDelete = ref<string | null>(null)
+const deleteLoading = ref(false)
 
 // Format date
 function formatDate(dateString: string) {
@@ -54,6 +60,45 @@ function viewPuzzle(puzzleId: string) {
 // View stats
 function viewStats(puzzleId: string) {
   router.push(`/puzzle/${puzzleId}/stats`)
+}
+
+// Show delete confirmation
+function confirmDelete(puzzleId: string) {
+  puzzleToDelete.value = puzzleId
+  showDeleteModal.value = true
+}
+
+// Cancel delete
+function cancelDelete() {
+  showDeleteModal.value = false
+  puzzleToDelete.value = null
+}
+
+// Delete puzzle
+async function deletePuzzle() {
+  if (!puzzleToDelete.value || deleteLoading.value) return
+
+  deleteLoading.value = true
+
+  try {
+    const response = await fetch(`/api/puzzles/${puzzleToDelete.value}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${authStore.token}` }
+    })
+
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.error || '删除失败')
+    }
+
+    // Remove from local list
+    puzzles.value = puzzles.value.filter(p => p.id !== puzzleToDelete.value)
+    cancelDelete()
+  } catch (err: unknown) {
+    error.value = err instanceof Error ? err.message : '删除失败'
+  } finally {
+    deleteLoading.value = false
+  }
 }
 
 onMounted(() => {
@@ -110,7 +155,7 @@ onMounted(() => {
         class="card bg-base-100 hover:shadow-lg transition-shadow"
       >
         <figure class="px-5 pt-5">
-          <img :src="puzzle.image_url" class="rounded-xl h-48 w-full object-cover" />
+          <img :src="getR2ImageUrl(puzzle.image_url)" class="rounded-xl h-48 w-full object-cover" />
         </figure>
         <div class="card-body">
           <div class="flex items-center justify-between text-sm mb-4">
@@ -139,9 +184,40 @@ onMounted(() => {
               <i class="i-mdi-chart-bar" />
               统计
             </button>
+            <button
+              class="btn btn-error btn-sm gap-1"
+              @click="confirmDelete(puzzle.id)"
+            >
+              <i class="i-mdi-delete" />
+              <span class="hidden sm:inline">删除</span>
+            </button>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Delete confirmation modal -->
+    <dialog
+      :class="['modal', { 'modal-open': showDeleteModal }]"
+      @click.self="cancelDelete"
+    >
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">确认删除</h3>
+        <p class="py-4">确定要删除这个谜题吗？删除后将无法恢复，所有相关的猜测记录和排行榜数据也会被清除。</p>
+        <div class="modal-action">
+          <button class="btn btn-ghost" @click="cancelDelete" :disabled="deleteLoading">
+            取消
+          </button>
+          <button class="btn btn-error gap-2" @click="deletePuzzle" :disabled="deleteLoading">
+            <span v-if="deleteLoading" class="loading loading-spinner loading-sm"></span>
+            <i class="i-mdi-delete" />
+            确认删除
+          </button>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop">
+        <button @click="cancelDelete">close</button>
+      </form>
+    </dialog>
   </div>
 </template>

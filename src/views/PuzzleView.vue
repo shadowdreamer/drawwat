@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../store/auth'
+import { getR2ImageUrl } from '../constants'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -187,7 +188,7 @@ onMounted(() => {
         <div class="card bg-base-100">
           <figure class="p-6">
             <img
-              :src="puzzle.image_url"
+              :src="getR2ImageUrl(puzzle.image_url)"
               class="rounded-xl w-full max-h-[480px] object-contain"
               alt="谜题图片"
             />

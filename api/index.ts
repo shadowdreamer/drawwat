@@ -10,7 +10,6 @@ export type Env = {
   VITE_BGM_CLIENT_ID: string;
   BGM_APP_SECRET: string;
   VITE_BGM_REDIRECT_URI: string;
-  R2_CUSTOM_DOMAIN: string;
 }
 
 const app = new Hono<{ Bindings: Env }>();
