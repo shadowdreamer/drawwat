@@ -144,7 +144,21 @@ puzzleRoute.get('/puzzles/:id', async (c) => {
   const db = c.env.MISC_DB
 
   const puzzle = await db
-    .prepare('SELECT id, image_url, hint, expires_at, created_at FROM puzzles WHERE id = ?')
+    .prepare(`
+      SELECT
+        p.id,
+        p.image_url,
+        p.hint,
+        p.expires_at,
+        p.created_at,
+        u.id as user_id,
+        u.username,
+        u.avatar_url,
+        u.provider_user_id as bangumi_id
+      FROM puzzles p
+      JOIN users u ON p.user_id = u.id
+      WHERE p.id = ?
+    `)
     .bind(puzzleId)
     .first()
 
@@ -160,7 +174,13 @@ puzzleRoute.get('/puzzles/:id', async (c) => {
     hint: (puzzle as any).hint,
     is_expired: expired,
     expires_at: (puzzle as any).expires_at,
-    created_at: (puzzle as any).created_at
+    created_at: (puzzle as any).created_at,
+    creator: {
+      id: (puzzle as any).user_id,
+      username: (puzzle as any).username,
+      avatar_url: (puzzle as any).avatar_url,
+      bangumi_id: (puzzle as any).bangumi_id
+    }
   })
 })
 

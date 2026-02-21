@@ -202,6 +202,29 @@ onMounted(() => {
           </div>
         </div>
 
+        <!-- Creator Card -->
+        <div v-if="puzzle.creator" class="px-6 pt-4">
+          <a
+            :href="`https://bgm.tv/user/${puzzle.creator.bangumi_id}`"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="card card-compact bg-base-100 shadow-sm hover:shadow-md transition-shadow border border-base-300"
+          >
+            <div class="card-body p-3 flex-row items-center gap-3">
+              <img
+                :src="puzzle.creator.avatar_url || '/default-avatar.png'"
+                class="w-12 h-12 rounded-full object-cover"
+                :alt="puzzle.creator.username"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="text-xs text-base-content/60 mb-0.5">出题人</div>
+                <div class="font-semibold truncate">{{ puzzle.creator.username }}</div>
+              </div>
+              <i class="i-lucide-external-link text-base-content/40" />
+            </div>
+          </a>
+        </div>
+
         <!-- Image Container -->
         <div class="flex-1 min-h-0 flex items-center justify-center p-6">
           <div class="relative max-w-full max-h-full">
@@ -389,6 +412,29 @@ onMounted(() => {
           <div v-if="isExpired" class="badge badge-warning badge-sm">
             已过期
           </div>
+        </div>
+
+        <!-- Creator Card (Mobile) -->
+        <div v-if="puzzle.creator" class="px-4 pt-4">
+          <a
+            :href="`https://bgm.tv/user/${puzzle.creator.bangumi_id}`"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="card card-compact bg-base-100 shadow-sm hover:shadow-md transition-shadow border border-base-300"
+          >
+            <div class="card-body p-3 flex-row items-center gap-3">
+              <img
+                :src="puzzle.creator.avatar_url || '/default-avatar.png'"
+                class="w-12 h-12 rounded-full object-cover"
+                :alt="puzzle.creator.username"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="text-xs text-base-content/60 mb-0.5">出题人</div>
+                <div class="font-semibold truncate">{{ puzzle.creator.username }}</div>
+              </div>
+              <i class="i-lucide-external-link text-base-content/40" />
+            </div>
+          </a>
         </div>
         <div class="p-4">
           <img
