@@ -21,6 +21,11 @@ const themeStore = useThemeStore()
     </div>
 
     <div class="flex-none gap-2">
+      <RouterLink to="/plaza" class="btn btn-ghost btn-sm gap-2">
+        <i class="i-lucide-globe" />
+        <span class="hidden sm:inline">广场</span>
+      </RouterLink>
+
       <button
         @click="themeStore.toggleTheme()"
         class="btn btn-ghost btn-sm gap-2"

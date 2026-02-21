@@ -91,6 +91,7 @@ puzzleRoute.post('/puzzles', authMiddleware, async (c) => {
     const hint = formData.get('hint') as string | null
     const case_sensitive = formData.get('case_sensitive') === 'true'
     const expires_in = parseInt(formData.get('expires_in') as string) || 1209600
+    const is_public = formData.get('is_public') !== 'false'
 
     // Validate required fields
     if (!imageFile || !answer) {
@@ -107,8 +108,8 @@ puzzleRoute.post('/puzzles', authMiddleware, async (c) => {
     const puzzleId = crypto.randomUUID()
 
     await db.prepare(`
-      INSERT INTO puzzles (id, user_id, image_url, answer, hint, case_sensitive, expires_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO puzzles (id, user_id, image_url, answer, hint, case_sensitive, expires_at, is_public)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       puzzleId,
       userId,
@@ -116,7 +117,8 @@ puzzleRoute.post('/puzzles', authMiddleware, async (c) => {
       answer,
       hint || null,
       case_sensitive ? 1 : 0,
-      expires_at
+      expires_at,
+      is_public ? 1 : 0
     ).run()
 
     // Generate share URL
@@ -415,6 +417,74 @@ puzzleRoute.get('/puzzles/:id/solves', async (c) => {
   return c.json({
     solves: results,
     total_solves: results.length
+  })
+})
+
+// GET /api/puzzles/public - Get public puzzles (no auth required)
+puzzleRoute.get('/puzzles/public', async (c) => {
+  const db = c.env.MISC_DB
+
+  const puzzles = await db
+    .prepare(`
+      SELECT
+        p.id,
+        p.image_url,
+        p.hint,
+        p.expires_at,
+        p.created_at,
+        u.id as user_id,
+        u.username,
+        u.avatar_url,
+        COUNT(DISTINCT ps.user_id) as solves_count
+      FROM puzzles p
+      JOIN users u ON p.user_id = u.id
+      LEFT JOIN puzzle_solves ps ON p.id = ps.puzzle_id
+      WHERE p.is_public = 1
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
+      LIMIT 20
+    `)
+    .all()
+
+  const results = puzzles.results || []
+
+  // Get guess counts for each puzzle
+  const puzzleIds = results.map((p: any) => p.id)
+  const guessCounts: Record<string, number> = {}
+
+  if (puzzleIds.length > 0) {
+    const placeholders = puzzleIds.map(() => '?').join(',')
+    const counts = await db
+      .prepare(`
+        SELECT puzzle_id, COUNT(*) as count
+        FROM guesses
+        WHERE puzzle_id IN (${placeholders})
+        GROUP BY puzzle_id
+      `)
+      .bind(...puzzleIds)
+      .all()
+
+    for (const row of (counts.results || [])) {
+      guessCounts[(row as any).puzzle_id] = (row as any).count
+    }
+  }
+
+  return c.json({
+    puzzles: results.map((p: any) => ({
+      id: p.id,
+      image_url: p.image_url,
+      hint: p.hint,
+      expires_at: p.expires_at,
+      created_at: p.created_at,
+      creator: {
+        id: p.user_id,
+        username: p.username,
+        avatar_url: p.avatar_url
+      },
+      solves_count: p.solves_count || 0,
+      guesses_count: guessCounts[p.id] || 0
+    })),
+    total: results.length
   })
 })
 

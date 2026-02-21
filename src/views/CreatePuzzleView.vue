@@ -14,6 +14,7 @@ const tldrawCanvasRef = ref<InstanceType<typeof TldrawCanvas> | null>(null)
 const answer = ref('')
 const hint = ref('')
 const caseSensitive = ref(false)
+const isPublic = ref(true) // Default public
 const expiresIn = ref(1209600) // Default 14 days
 
 // UI state
@@ -43,6 +44,7 @@ function resetForm() {
   answer.value = ''
   hint.value = ''
   caseSensitive.value = false
+  isPublic.value = true
   expiresIn.value = 1209600
   error.value = ''
   tldrawCanvasRef.value?.clearCanvas()
@@ -75,6 +77,7 @@ async function createPuzzle() {
       formData.append('hint', hint.value.trim())
     }
     formData.append('case_sensitive', String(caseSensitive.value))
+    formData.append('is_public', String(isPublic.value))
     formData.append('expires_in', String(expiresIn.value))
 
     const response = await fetch('/api/puzzles', {
@@ -192,6 +195,19 @@ function closeShareModal() {
               class="checkbox checkbox-sm checkbox-primary"
             />
             <span class="label-text text-sm">区分大小写</span>
+          </label>
+
+          <!-- Public Checkbox -->
+          <label class="label cursor-pointer justify-start gap-3 py-2">
+            <input
+              v-model="isPublic"
+              type="checkbox"
+              class="checkbox checkbox-sm checkbox-primary"
+            />
+            <div class="flex flex-col">
+              <span class="label-text text-sm">公开到广场</span>
+              <span class="label-text-alt text-xs">取消后将仅在分享链接可见</span>
+            </div>
           </label>
 
           <!-- Expiry Options -->
@@ -315,6 +331,19 @@ function closeShareModal() {
                 class="checkbox checkbox-primary"
               />
               <span class="label-text">区分大小写</span>
+            </label>
+
+            <!-- Public Checkbox -->
+            <label class="label cursor-pointer justify-start gap-3 py-2">
+              <input
+                v-model="isPublic"
+                type="checkbox"
+                class="checkbox checkbox-primary"
+              />
+              <div class="flex flex-col">
+                <span class="label-text">公开到广场</span>
+                <span class="label-text-alt text-xs">取消后将仅在分享链接可见</span>
+              </div>
             </label>
 
             <!-- Expiry Options -->
