@@ -216,10 +216,15 @@ async function submitGuess() {
   }
 }
 
-// Show answer (expired puzzles only)
+// Show answer (expired puzzles or gave up users)
 async function revealAnswer() {
   try {
-    const response = await fetch(`/api/puzzles/${puzzleId.value}/answer`, {
+    // Use different endpoint for users who gave up
+    const endpoint = hasGivenUp.value
+      ? `/api/puzzles/${puzzleId.value}/answer-after-give-up`
+      : `/api/puzzles/${puzzleId.value}/answer`
+
+    const response = await fetch(endpoint, {
       headers: { 'Authorization': `Bearer ${authStore.token}` }
     })
 
@@ -414,11 +419,25 @@ onMounted(() => {
             </p>
           </div>
 
-          <div v-else-if="hasGivenUp" class="px-6 py-4 border-b border-base-300 text-center">
-            <p class="text-sm text-warning font-medium">
+          <div v-else-if="hasGivenUp && !showAnswer" class="px-6 py-4 border-b border-base-300 text-center">
+            <p class="text-sm text-warning font-medium mb-3">
               <i class="i-lucide-flag mr-1" />
               你已经放弃了这个谜题
             </p>
+            <button class="btn btn-warning btn-sm gap-2" @click="revealAnswer">
+              <i class="i-lucide-eye" />
+              查看答案
+            </button>
+          </div>
+
+          <div v-else-if="hasGivenUp && showAnswer" class="mx-4 mt-4">
+            <div class="alert alert-success alert-sm py-3">
+              <i class="i-lucide-circle-check" />
+              <div>
+                <div class="text-sm font-semibold">正确答案是：</div>
+                <div class="text-lg font-mono font-bold">{{ correctAnswer }}</div>
+              </div>
+            </div>
           </div>
 
           <!-- Last Guess Result -->
@@ -749,6 +768,24 @@ onMounted(() => {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+
+          <div v-else-if="hasGivenUp && !showAnswer" class="alert alert-warning mb-4">
+            <i class="i-lucide-flag" />
+            <div class="flex-1">
+              <p class="text-sm">你已经放弃了这个谜题</p>
+            </div>
+            <button class="btn btn-sm btn-warning" @click="revealAnswer">
+              查看答案
+            </button>
+          </div>
+
+          <div v-else-if="hasGivenUp && showAnswer" class="alert alert-success mb-4">
+            <i class="i-lucide-circle-check" />
+            <div>
+              <h3 class="font-semibold">正确答案是：</h3>
+              <div class="text-lg font-mono mt-1">{{ correctAnswer }}</div>
             </div>
           </div>
 

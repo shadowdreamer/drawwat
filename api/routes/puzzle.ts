@@ -268,6 +268,37 @@ puzzleRoute.get('/puzzles/:id/answer', authMiddleware, async (c) => {
   })
 })
 
+// GET /api/puzzles/:id/answer-after-give-up - Get answer for users who gave up
+puzzleRoute.get('/puzzles/:id/answer-after-give-up', authMiddleware, async (c) => {
+  const puzzleId = c.req.param('id')
+  const userId = c.get('userId')
+  const db = c.env.MISC_DB
+
+  // Check if user has given up
+  const giveUpRecord = await db
+    .prepare('SELECT * FROM puzzle_gives_up WHERE puzzle_id = ? AND user_id = ?')
+    .bind(puzzleId, userId)
+    .first()
+
+  if (!giveUpRecord) {
+    return c.json({ error: 'You have not given up on this puzzle' }, 403)
+  }
+
+  // Get answer
+  const puzzle = await db
+    .prepare('SELECT answer FROM puzzles WHERE id = ?')
+    .bind(puzzleId)
+    .first()
+
+  if (!puzzle) {
+    return c.json({ error: 'Puzzle not found' }, 404)
+  }
+
+  return c.json({
+    answer: (puzzle as any).answer
+  })
+})
+
 // POST /api/puzzles/:id/guess - Submit a guess
 const guessSchema = z.object({
   answer: z.string().min(1)
