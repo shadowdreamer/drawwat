@@ -40,9 +40,9 @@ export const useAuthStore = defineStore('auth', () => {
       state: generateRandomState()
     })
 
-    // Save state to sessionStorage for verification
+    // Save state to localStorage for verification
     const stateValue = params.get('state')!
-    sessionStorage.setItem('oauth_state', stateValue)
+    localStorage.setItem('oauth_state', stateValue)
     console.log('OAuth state saved:', stateValue, 'Redirect URL:', `https://bgm.tv/oauth/authorize?${params.toString()}`)
 
     window.location.href = `https://bgm.tv/oauth/authorize?${params.toString()}`
@@ -51,17 +51,17 @@ export const useAuthStore = defineStore('auth', () => {
   // Exchange authorization code for access token
   async function getToken(code: string, state: string): Promise<boolean> {
     // Verify state to prevent CSRF
-    const savedState = sessionStorage.getItem('oauth_state')
+    const savedState = localStorage.getItem('oauth_state')
     console.log('OAuth state verification:', {
       saved: savedState,
       received: state,
       match: savedState === state,
-      allSessionStorage: { ...sessionStorage }
+      allLocalStorage: { ...localStorage }
     })
     if (!savedState || savedState !== state) {
       throw new Error('Invalid OAuth state')
     }
-    sessionStorage.removeItem('oauth_state')
+    localStorage.removeItem('oauth_state')
 
     try {
       const res = await fetch('/api/auth', {
