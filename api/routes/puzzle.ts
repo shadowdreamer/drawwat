@@ -139,7 +139,6 @@ puzzleRoute.post('/puzzles', authMiddleware, async (c) => {
 // GET /api/puzzles/:id - Get puzzle details (without answer)
 puzzleRoute.get('/puzzles/:id', async (c) => {
   const puzzleId = c.req.param('id')
-  const showHint = c.req.query('hint') === 'true'
   const db = c.env.MISC_DB
 
   const puzzle = await db
@@ -156,7 +155,7 @@ puzzleRoute.get('/puzzles/:id', async (c) => {
   return c.json({
     id: (puzzle as any).id,
     image_url: (puzzle as any).image_url,
-    hint: showHint ? (puzzle as any).hint : null,
+    hint: (puzzle as any).hint,
     is_expired: expired,
     expires_at: (puzzle as any).expires_at,
     created_at: (puzzle as any).created_at
@@ -346,8 +345,8 @@ puzzleRoute.post('/puzzles/:id/guess', authMiddleware, zValidator('json', guessS
   return c.json(response)
 })
 
-// GET /api/puzzles/:id/guesses - Get puzzle guesses
-puzzleRoute.get('/puzzles/:id/guesses', async (c) => {
+// GET /api/puzzles/:id/guesses - Get puzzle guesses (requires auth)
+puzzleRoute.get('/puzzles/:id/guesses', authMiddleware, async (c) => {
   const puzzleId = c.req.param('id')
   const userId = c.get('userId')
   const db = c.env.MISC_DB
@@ -384,10 +383,10 @@ puzzleRoute.get('/puzzles/:id/guesses', async (c) => {
     .first()
 
   return c.json({
-    guesses: guesses.results,
-    total_count: (stats as any).total_count || 0,
-    correct_count: (stats as any).correct_count || 0,
-    counted_count: (stats as any).counted_count || 0
+    guesses: guesses.results || [],
+    total_count: (stats as any)?.total_count || 0,
+    correct_count: (stats as any)?.correct_count || 0,
+    counted_count: (stats as any)?.counted_count || 0
   })
 })
 
@@ -412,9 +411,10 @@ puzzleRoute.get('/puzzles/:id/solves', async (c) => {
     .bind(puzzleId)
     .all()
 
+  const results = solves.results || []
   return c.json({
-    solves: solves.results,
-    total_solves: solves.results.length
+    solves: results,
+    total_solves: results.length
   })
 })
 

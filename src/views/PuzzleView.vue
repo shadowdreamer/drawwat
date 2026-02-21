@@ -72,6 +72,9 @@ async function loadPuzzle() {
     if (guessesRes.ok) {
       const guessesData = await guessesRes.json()
       guesses.value = guessesData.guesses || []
+    } else if (guessesRes.status === 401) {
+      // Not authenticated, ignore guesses
+      guesses.value = []
     }
 
     if (solvesRes.ok) {
