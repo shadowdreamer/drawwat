@@ -9,10 +9,10 @@ defineExpose({
   },
   exportAsImage:async ()=>{
     const board = document.getElementById('my-board') as TldrawElement;
-    const blob = await board?.exportImage();
-    if (blob) {
+    const image = await board?.exportImage();
+    if (image) {
       // 创建下载链接
-      return blob.blob
+      return image.blob
     }
   },
 })
