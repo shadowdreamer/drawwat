@@ -424,6 +424,8 @@ puzzleRoute.get('/puzzles/:id/solves', async (c) => {
       SELECT
         u.id as user_id,
         u.username,
+        u.provider,
+        u.avatar_url,
         ps.solved_at,
         ps.time_to_solve,
         ROW_NUMBER() OVER (ORDER BY ps.solved_at ASC) as rank

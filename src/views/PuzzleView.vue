@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../store/auth'
 import { getR2ImageUrl } from '../constants'
+import { createBangumiIdResolver, type BangumiIdResolver } from '../utils/bangumi'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -11,6 +12,14 @@ const authStore = useAuthStore()
 const puzzle = ref<any>(null)
 const loading = ref(true)
 const error = ref('')
+
+// Creator resolver
+const creatorResolver = computed<BangumiIdResolver | null>(() => {
+  if (puzzle.value?.creator?.username) {
+    return getResolver(puzzle.value.creator.username)
+  }
+  return null
+})
 
 // Guess state
 const guess = ref('')
@@ -22,6 +31,16 @@ const leaderboard = ref<any[]>([])
 // Show answer state
 const showAnswer = ref(false)
 const correctAnswer = ref('')
+
+// Create resolver map for bangumi users
+const resolverMap = ref<Map<string, BangumiIdResolver>>(new Map())
+
+function getResolver(username: string): BangumiIdResolver | null {
+  if (!resolverMap.value.has(username)) {
+    resolverMap.value.set(username, createBangumiIdResolver(username))
+  }
+  return resolverMap.value.get(username)!
+}
 
 // Computed
 const puzzleId = computed(() => route.params.id as string)
@@ -211,7 +230,9 @@ onMounted(() => {
               class="w-6 h-6 rounded-full object-cover"
               :alt="puzzle.creator.username"
             />
-            <span class="text-sm font-medium">{{ puzzle.creator.username }}</span>
+            <span class="text-sm font-medium">
+              {{ creatorResolver?.isResolved ? creatorResolver?.nickname : puzzle.creator.username }}
+            </span>
             <i class="i-lucide-external-link text-base-content/40 text-sm" />
           </a>
 
@@ -378,7 +399,25 @@ onMounted(() => {
                       <span v-else-if="index === 2">🥉</span>
                       <span v-else class="text-xs opacity-70">#{{ index + 1 }}</span>
                     </td>
-                    <td class="text-sm">{{ entry.username }}</td>
+                    <td>
+                      <div class="flex items-center gap-2">
+                        <div class="avatar placeholder">
+                          <div class="bg-neutral text-neutral-content rounded-full w-6 h-6">
+                            <img
+                              v-if="entry.avatar_url"
+                              :src="entry.avatar_url"
+                              :alt="entry.username"
+                            />
+                            <span v-else class="text-xs font-semibold">
+                              {{ getResolver(entry.username)?.nickname?.[0]?.toUpperCase() || entry.username?.[0]?.toUpperCase() || '?' }}
+                            </span>
+                          </div>
+                        </div>
+                        <span class="text-sm">
+                          {{ getResolver(entry.username)?.isResolved ? getResolver(entry.username)?.nickname : entry.username }}
+                        </span>
+                      </div>
+                    </td>
                     <td class="text-xs">{{ formatTime(entry.time_to_solve) }}</td>
                   </tr>
                 </tbody>
@@ -418,7 +457,9 @@ onMounted(() => {
               class="w-5 h-5 rounded-full object-cover shrink-0"
               :alt="puzzle.creator.username"
             />
-            <span class="text-sm font-medium truncate">{{ puzzle.creator.username }}</span>
+            <span class="text-sm font-medium truncate">
+              {{ creatorResolver?.isResolved ? creatorResolver?.nickname : puzzle.creator.username }}
+            </span>
             <i class="i-lucide-external-link text-base-content/40 text-xs shrink-0" />
           </a>
 
@@ -570,7 +611,25 @@ onMounted(() => {
                         <span v-else-if="index === 2" class="text-xl">🥉</span>
                         <span v-else class="badge badge-ghost text-sm">#{{ index + 1 }}</span>
                       </td>
-                      <td class="font-semibold">{{ entry.username }}</td>
+                      <td>
+                        <div class="flex items-center gap-2">
+                          <div class="avatar placeholder">
+                            <div class="bg-neutral text-neutral-content rounded-full w-6 h-6">
+                              <img
+                                v-if="entry.avatar_url"
+                                :src="entry.avatar_url"
+                                :alt="entry.username"
+                              />
+                              <span v-else class="text-xs font-semibold">
+                                {{ getResolver(entry.username)?.nickname?.[0]?.toUpperCase() || entry.username?.[0]?.toUpperCase() || '?' }}
+                              </span>
+                            </div>
+                          </div>
+                          <span class="font-semibold">
+                            {{ getResolver(entry.username)?.isResolved ? getResolver(entry.username)?.nickname : entry.username }}
+                          </span>
+                        </div>
+                      </td>
                       <td>{{ formatTime(entry.time_to_solve) }}</td>
                     </tr>
                   </tbody>

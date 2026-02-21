@@ -152,7 +152,7 @@ onMounted(() => {
                     <span v-if="index === 0" class="text-xl">🥇</span>
                     <span v-else-if="index === 1" class="text-xl">🥈</span>
                     <span v-else-if="index === 2" class="text-xl">🥉</span>
-                    <span v-else class="badge badge-ghost text-sm">#{{ index + 1 }}</span>
+                    <span v-else class="badge badge-ghost text-sm">#{{ +index + 1 }}</span>
                   </td>
                   <td>
                     <div class="flex items-center gap-3">
