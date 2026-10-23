@@ -30,15 +30,18 @@ function handleLogout() {
     v-if="!authStore.isLoggedIn"
     @click="handleLogin"
     class="btn btn-primary btn-sm gap-2"
+    aria-label="使用 Bangumi 登录"
   >
     <i class="i-lucide-log-in" />
-    <span class="hidden sm:inline">登录</span>
+    <span>登录</span>
   </button>
 
   <div v-else class="dropdown dropdown-end">
-    <label
+    <button
+      type="button"
       tabindex="0"
       class="btn btn-ghost btn-sm gap-2 px-2"
+      aria-label="打开账户菜单"
     >
       <div class="avatar placeholder">
         <div class="bg-neutral text-neutral-content rounded-full w-8 h-8">
@@ -56,17 +59,16 @@ function handleLogout() {
         {{ bangumiResolver?.isResolved ? bangumiResolver.nickname : authStore.user?.username }}
       </span>
       <i class="i-lucide-chevron-down text-xs opacity-60" />
-    </label>
+    </button>
     <ul
       tabindex="0"
       class="dropdown-content z-[1] menu menu-sm p-2 shadow-xl bg-base-100 rounded-box w-52 mt-2 border border-base-300"
-      style="background-color: hsl(var(--b1));"
     >
       <li class="menu-title opacity-60">
         {{ bangumiResolver?.isResolved ? bangumiResolver.nickname : authStore.user?.username }}
       </li>
       <li><RouterLink to="/my-puzzles"><i class="i-lucide-gamepad-2" />我的谜题</RouterLink></li>
-      <li><a @click="handleLogout" class="text-error"><i class="i-lucide-log-out" />退出登录</a></li>
+      <li><button type="button" @click="handleLogout" class="text-error"><i class="i-lucide-log-out" />退出登录</button></li>
     </ul>
   </div>
 </template>

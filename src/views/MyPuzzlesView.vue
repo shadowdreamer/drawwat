@@ -124,12 +124,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container mx-auto px-6 py-12 max-w-6xl">
+  <div class="content-page page-width">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-10">
+    <div class="page-heading">
       <div>
+        <span class="eyebrow">MY LITTLE GALLERY</span>
         <h1 class="text-2xl sm:text-3xl font-bold font-display">我的谜题</h1>
-        <p class="text-base-content/60 mt-2">管理你创建的所有谜题</p>
+        <p>你留下的每个脑洞，都在这里等着被猜中。</p>
       </div>
       <button class="btn btn-primary gap-2" @click="router.push('/create')">
         <i class="i-lucide-plus" />
@@ -146,13 +147,14 @@ onMounted(() => {
     </div>
 
     <!-- Error -->
-    <div v-else-if="error" class="alert alert-error">
+    <div v-else-if="error" class="alert alert-error" role="alert">
       <i class="i-lucide-alert-circle" />
       <span>{{ error }}</span>
+      <button class="btn btn-sm btn-outline" @click="loadMyPuzzles">重新加载</button>
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="puzzles.length === 0" class="text-center py-24">
+    <div v-else-if="puzzles.length === 0" class="empty-panel">
       <div class="w-20 h-20 rounded-full bg-base-300/30 flex items-center justify-center mx-auto mb-8">
         <i class="i-lucide-puzzle text-4xl text-base-content/30" />
       </div>
@@ -172,7 +174,7 @@ onMounted(() => {
         class="card bg-base-100 hover:shadow-lg transition-shadow"
       >
         <figure class="px-5 pt-5">
-          <img :src="getR2ImageUrl(puzzle.image_url)" class="rounded-xl h-48 w-full object-cover" />
+          <img :src="getR2ImageUrl(puzzle.image_url)" alt="我绘制的谜题" loading="lazy" class="rounded-xl h-48 w-full object-contain bg-white" />
         </figure>
         <div class="card-body">
           <div class="flex items-center justify-between text-sm mb-4">

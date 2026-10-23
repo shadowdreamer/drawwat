@@ -13,13 +13,7 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    Vue({
-      template:{
-        compilerOptions:{
-          isCustomElement:(tag)=>tag.startsWith('web-')
-        }
-      }
-    }),
+    Vue(),
     cloudflare(),
     Icons({
       scale: 1.5, // Scale of icons against 1em
@@ -65,7 +59,4 @@ export default defineConfig({
       "@/": `${resolve(__dirname, "src")}/`,
     },
   },
-  // optimizeDeps: {
-  //   exclude: ["tldraw"],
-  // },
 });

@@ -8,13 +8,13 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ExcalidrawCanvas: typeof import('./../src/components/ExcalidrawCanvas.vue')['default']
     GaveUpList: typeof import('./../src/components/GaveUpList.vue')['default']
     LoginButton: typeof import('./../src/components/LoginButton.vue')['default']
     NavBar: typeof import('./../src/components/NavBar.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ShareModal: typeof import('./../src/components/ShareModal.vue')['default']
-    TldrawCanvas: typeof import('./../src/components/TldrawCanvas.vue')['default']
     WrongGuessesList: typeof import('./../src/components/WrongGuessesList.vue')['default']
   }
 }

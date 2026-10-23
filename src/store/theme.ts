@@ -29,14 +29,19 @@ export const useThemeStore = defineStore('theme', () => {
   }
 
   function initTheme() {
-    const saved = localStorage.getItem('drawwat-theme')
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    const initialTheme = saved ? (saved as Theme) : (prefersDark ? 'dark' : 'light')
+    let initialTheme: Theme = prefersDark ? 'dark' : 'light'
+    try {
+      const saved = localStorage.getItem('drawwat-theme')
+      // Accept the previous Pinia object as well as the current string format.
+      const value = saved && saved.startsWith('{') ? JSON.parse(saved).theme : saved
+      if (value === 'light' || value === 'dark') initialTheme = value
+    } catch { /* Fall back to the system theme when storage is unavailable. */ }
     setTheme(initialTheme)
   }
 
   watch(theme, (t) => {
-    localStorage.setItem('drawwat-theme', t)
+    try { localStorage.setItem('drawwat-theme', t) } catch { /* Theme still works without persistence. */ }
   })
 
   return {
@@ -45,10 +50,5 @@ export const useThemeStore = defineStore('theme', () => {
     setTheme,
     toggleTheme,
     initTheme
-  }
-}, {
-  persist: {
-    key: 'drawwat-theme',
-    pick: ['theme']
   }
 })

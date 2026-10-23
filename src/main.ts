@@ -1,6 +1,5 @@
 import './styles/main.css'
 import "uno.css";
-import './tldraw'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'

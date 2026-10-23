@@ -24,7 +24,7 @@ https://draw.dovahkiin.top/
 - **样式**: UnoCSS + DaisyUI
 - **状态管理**: Pinia
 - **数据库**: Cloudflare D1
-- **画板**: tldraw
+- **画板**: [Excalidraw](https://github.com/excalidraw/excalidraw)（React 组件嵌入 Vue，中文界面、固定白底亮色、本地草稿、WebP 导出）
 
 ## 开发
 

@@ -19,8 +19,8 @@
 	"dependencies": {
 		"@ameinhardt/unocss-preset-daisy": "^1.1.8",
 		"@cloudflare/vite-plugin": "^1.13.12",
+		"@excalidraw/excalidraw": "0.18.1",
 		"@hono/zod-validator": "^0.4.3",
-		"@tldraw/tldraw": "^4.4.0",
 		"@unocss/reset": "^66.5.3",
 		"@vue/tsconfig": "^0.8.1",
 		"@vueuse/core": "^13.4.0",
@@ -28,7 +28,8 @@
 		"hono": "^4.9.10",
 		"pinia": "^3.0.3",
 		"pinia-plugin-persistedstate": "^4.5.0",
-		"tldraw": "^4.4.0",
+		"react": "18.3.1",
+		"react-dom": "18.3.1",
 		"vue": "^3.5.17",
 		"vue-router": "^4.5.1",
 		"zod": "^3.24.2"
@@ -37,6 +38,8 @@
 		"@iconify-json/lucide": "^1.2.92",
 		"@tsconfig/node22": "^22.0.2",
 		"@types/node": "^24.0.6",
+		"@types/react": "18",
+		"@types/react-dom": "18",
 		"@vitejs/plugin-vue": "^6.0.0",
 		"npm-run-all2": "^8.0.4",
 		"typescript": "^5.8.3",

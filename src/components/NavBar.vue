@@ -3,56 +3,28 @@ import { RouterLink } from 'vue-router'
 import { useAuthStore } from '../store/auth'
 import { useThemeStore } from '../store/theme'
 import LoginButton from './LoginButton.vue'
-
 const authStore = useAuthStore()
 const themeStore = useThemeStore()
 </script>
 
 <template>
-  <nav class="navbar bg-base-100/95 backdrop-blur-md sticky top-0 z-50 px-4 sm:px-6">
-    <div class="flex-1">
-      <RouterLink
-        to="/"
-        class="btn btn-ghost text-xl gap-2 font-display hover:bg-transparent"
-      >
-        <i class="i-lucide-puzzle" />
-        <span>DrawWat</span>
+  <header class="site-header">
+    <nav class="site-nav page-width" aria-label="主导航">
+      <RouterLink to="/" class="brand" aria-label="DrawWat 首页">
+        <span class="brand-symbol"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M9 5c5-3 13 1 13 6 0 4-8 3-9 7-1 3 6 5 10 1M8 9c-4 6-3 15 4 17 6 2 14-3 14-9" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span>
+        <span>DrawWat<span class="brand-dot">.</span></span>
       </RouterLink>
-    </div>
-
-    <div class="flex-none gap-2">
-      <RouterLink to="/plaza" class="btn btn-ghost btn-sm gap-2">
-        <i class="i-lucide-globe" />
-        <span class="hidden sm:inline">广场</span>
-      </RouterLink>
-
-      <button
-        @click="themeStore.toggleTheme()"
-        class="btn btn-ghost btn-sm gap-2"
-        :title="themeStore.isDark ? '切换到亮色模式' : '切换到暗色模式'"
-      >
-        <i class="i-lucide-sun" v-show="themeStore.isDark" />
-        <i class="i-lucide-moon" v-show="!themeStore.isDark" />
-      </button>
-
-      <RouterLink
-        v-if="authStore.isLoggedIn"
-        to="/create"
-        class="btn btn-ghost btn-sm gap-2"
-      >
-        <i class="i-lucide-plus" />
-        <span class="hidden sm:inline">创建</span>
-      </RouterLink>
-      <RouterLink
-        v-if="authStore.isLoggedIn"
-        to="/my-puzzles"
-        class="btn btn-ghost btn-sm gap-2"
-      >
-        <i class="i-lucide-gamepad-2" />
-        <span class="hidden sm:inline">我的谜题</span>
-      </RouterLink>
-
-      <LoginButton />
-    </div>
-  </nav>
+      <div class="nav-links">
+        <RouterLink to="/" exact-active-class="nav-active" class="nav-link">首页</RouterLink>
+        <RouterLink to="/plaza" active-class="nav-active" class="nav-link"><i class="i-lucide-compass" /> 谜题广场</RouterLink>
+        <RouterLink v-if="authStore.isLoggedIn" to="/my-puzzles" active-class="nav-active" class="nav-link">我的谜题</RouterLink>
+        <a v-else href="/#how-it-works" class="nav-link how-link">怎么玩</a>
+      </div>
+      <div class="nav-actions">
+        <button class="theme-button" @click="themeStore.toggleTheme()" :title="themeStore.isDark ? '切换到亮色模式' : '切换到暗色模式'" :aria-label="themeStore.isDark ? '切换到亮色模式' : '切换到暗色模式'"><i :class="themeStore.isDark ? 'i-lucide-sun' : 'i-lucide-moon'" /></button>
+        <RouterLink v-if="authStore.isLoggedIn" to="/create" class="btn btn-primary nav-create"><i class="i-lucide-plus" /><span>画一个</span></RouterLink>
+        <LoginButton />
+      </div>
+    </nav>
+  </header>
 </template>

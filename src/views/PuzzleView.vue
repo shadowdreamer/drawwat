@@ -254,7 +254,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-base-200">
+  <div class="puzzle-page">
     <!-- Loading state -->
     <div v-if="loading" class="flex items-center justify-center h-[calc(100vh-4rem)]">
       <div class="text-center">
@@ -293,7 +293,7 @@ onMounted(() => {
             class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-base-200 hover:bg-base-300 transition-colors border border-base-300"
           >
             <img
-              :src="puzzle.creator.avatar_url || '/default-avatar.png'"
+              v-if="puzzle.creator.avatar_url" :src="puzzle.creator.avatar_url"
               class="w-6 h-6 rounded-full object-cover"
               :alt="puzzle.creator.username"
             />
@@ -310,10 +310,10 @@ onMounted(() => {
 
         <!-- Image Container -->
         <div class="flex-1 min-h-0 flex items-center justify-center p-6">
-          <div class="relative max-w-full max-h-full">
+          <div class="puzzle-art-frame">
             <img
               :src="getR2ImageUrl(puzzle.image_url)"
-              class="max-h-[calc(100vh-8rem)] w-auto object-contain rounded-xl shadow-lg"
+              class="puzzle-art-image"
               alt="谜题图片"
             />
           </div>
@@ -371,10 +371,11 @@ onMounted(() => {
           <!-- Guess Input -->
           <div v-if="canGuess && (!hasSolved || !showAnswer)" class="px-6 py-4 border-b border-base-300">
             <div class="form-control">
-              <label class="label py-1">
+              <label class="label py-1" for="desktop-guess">
                 <span class="label-text font-medium">输入你的答案</span>
               </label>
               <input
+                id="desktop-guess"
                 v-model="guess"
                 type="text"
                 class="input input-bordered input-sm text-center text-xl tracking-widest"
@@ -576,7 +577,7 @@ onMounted(() => {
             class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-base-200 hover:bg-base-300 transition-colors border border-base-300 min-w-0"
           >
             <img
-              :src="puzzle.creator.avatar_url || '/default-avatar.png'"
+              v-if="puzzle.creator.avatar_url" :src="puzzle.creator.avatar_url"
               class="w-5 h-5 rounded-full object-cover shrink-0"
               :alt="puzzle.creator.username"
             />
@@ -638,10 +639,11 @@ onMounted(() => {
           <!-- Guess Input -->
           <div v-if="canGuess && (!hasSolved || !showAnswer)" class="mb-6">
             <div class="form-control">
-              <label class="label">
+              <label class="label" for="mobile-guess">
                 <span class="label-text font-medium">输入你的答案</span>
               </label>
               <input
+                id="mobile-guess"
                 v-model="guess"
                 type="text"
                 class="input input-bordered input-lg text-center text-2xl tracking-widest"

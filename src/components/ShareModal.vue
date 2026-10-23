@@ -51,11 +51,11 @@ function handleClose() {
 </script>
 
 <template>
-  <dialog v-if="show" class="modal modal-open">
+  <dialog v-if="show" class="modal modal-open" aria-labelledby="share-modal-title" aria-modal="true" @keydown.esc="handleClose">
     <div class="modal-box max-w-md">
       <h3 class="font-bold text-lg mb-6 flex items-center gap-3">
         <span class="text-2xl">🔗</span>
-        <span>分享谜题</span>
+        <span id="share-modal-title">分享谜题</span>
       </h3>
       <p class="mb-6 text-base-content/80">选择分享方式：</p>
 
@@ -72,6 +72,7 @@ function handleClose() {
             </div>
             <div class="join w-full">
               <input
+                aria-label="谜题分享链接"
                 :value="shareUrl"
                 class="input input-bordered input-sm join-item flex-1 text-xs"
                 readonly
@@ -101,7 +102,7 @@ function handleClose() {
             <p class="text-xs text-base-content/60 mb-3">复制内容预览：</p>
             <div class="bg-base-100 rounded-lg p-3 text-xs font-mono mb-3 border border-base-300">
               我画了一幅画，猜猜是什么？<br/>
-              <span class="opacity-70">{{ shareUrl }}</span>
+              <span class="opacity-70 break-all">{{ shareUrl }}</span>
             </div>
             <button
               class="btn btn-warning btn-sm w-full"

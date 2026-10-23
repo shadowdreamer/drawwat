@@ -2,13 +2,13 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
-import TldrawCanvas from '../components/TldrawCanvas.vue'
+import ExcalidrawCanvas from '../components/ExcalidrawCanvas.vue'
 import ShareModal from '../components/ShareModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const tldrawCanvasRef = ref<InstanceType<typeof TldrawCanvas> | null>(null)
+const canvasRef = ref<InstanceType<typeof ExcalidrawCanvas> | null>(null)
 
 // Form data
 const answer = ref('')
@@ -47,13 +47,13 @@ function resetForm() {
   isPublic.value = true
   expiresIn.value = 1209600
   error.value = ''
-  tldrawCanvasRef.value?.clearCanvas()
+  canvasRef.value?.clearCanvas()
 }
 
 // Create puzzle
 async function createPuzzle() {
   if (!canSubmit.value || loading.value) return
-  if (!tldrawCanvasRef.value) {
+  if (!canvasRef.value) {
     error.value = '画板未加载'
     return
   }
@@ -63,7 +63,7 @@ async function createPuzzle() {
 
   try {
     // Export canvas to blob image
-    const imageBlob = await tldrawCanvasRef.value.exportAsImage()
+    const imageBlob = await canvasRef.value.exportAsImage()
     if (!imageBlob) {
       error.value = '请先在画板上绘制内容'
       return
@@ -113,303 +113,22 @@ function closeShareModal() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-base-200">
-    <!-- Desktop: Side by Side Layout -->
-    <div class="hidden lg:flex h-[calc(100vh-4rem)]">
-      <!-- Left: Canvas Area -->
-      <div class="flex-1 flex flex-col bg-base-300/30">
-        <!-- Canvas Header -->
-        <div class="flex items-center justify-between px-6 py-3 bg-base-100/80 backdrop-blur-sm border-b border-base-300 shrink-0">
-          <div class="flex items-center gap-2">
-            <i class="i-lucide-palette text-primary" />
-            <h1 class="font-semibold">绘制区域</h1>
-          </div>
-          <div class="text-sm text-base-content/50">
-            使用工具栏绘制你的谜题图片
-          </div>
-        </div>
-
-        <!-- Canvas Container -->
-        <div class="flex-1 min-h-0 p-4">
-          <div class="tldraw-container h-full">
-            <TldrawCanvas ref="tldrawCanvasRef" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Right: Form Panel -->
-      <div class="w-96 flex flex-col bg-base-100 border-l border-base-300 shadow-xl">
-        <!-- Form Header -->
-        <div class="px-6 py-4 border-b border-base-300 shrink-0">
-          <h2 class="text-lg font-bold font-display">创建新谜题</h2>
-          <p class="text-sm text-base-content/60 mt-1">设置答案和分享选项</p>
-        </div>
-
-        <!-- Scrollable Form Content -->
-        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-          <!-- Error Alert -->
-          <div v-if="error" class="alert alert-error alert-sm py-2">
-            <i class="i-lucide-alert-circle text-sm" />
-            <span class="text-sm">{{ error }}</span>
-          </div>
-
-          <!-- Answer Input -->
-          <div class="form-control">
-            <label class="label py-1">
-              <span class="label-text font-medium">谜底答案</span>
-              <span class="label-text-alt text-error">必填</span>
-            </label>
-            <input
-              v-model="answer"
-              type="text"
-              class="input input-bordered input-sm"
-              placeholder="输入正确答案..."
-              maxlength="500"
-            />
-            <label class="label py-1">
-              <span class="label-text-alt">{{ answerLength }} 个字符</span>
-            </label>
-          </div>
-
-          <!-- Hint Input -->
-          <div class="form-control">
-            <label class="label py-1">
-              <span class="label-text">提示语（可选）</span>
-            </label>
-            <textarea
-              v-model="hint"
-              class="textarea textarea-bordered textarea-sm h-20"
-              placeholder="给猜谜者一些提示..."
-              maxlength="500"
-            ></textarea>
-            <label class="label py-1">
-              <span class="label-text-alt">给猜谜者一些提示帮助</span>
-            </label>
-          </div>
-
-          <!-- Case Sensitive Checkbox -->
-          <label class="label cursor-pointer justify-start gap-3 py-2">
-            <input
-              v-model="caseSensitive"
-              type="checkbox"
-              class="checkbox checkbox-sm checkbox-primary"
-            />
-            <span class="label-text text-sm">区分大小写</span>
-          </label>
-
-          <!-- Public Checkbox -->
-          <label class="label cursor-pointer justify-start gap-3 py-2">
-            <input
-              v-model="isPublic"
-              type="checkbox"
-              class="checkbox checkbox-sm checkbox-primary"
-            />
-            <div class="flex flex-col">
-              <span class="label-text text-sm">公开到广场</span>
-              <span class="label-text-alt text-xs">取消后将仅在分享链接可见</span>
-            </div>
-          </label>
-
-          <!-- Expiry Options -->
-          <div>
-            <label class="label py-1">
-              <span class="label-text font-medium">过期时间</span>
-            </label>
-            <div class="grid grid-cols-3 gap-2">
-              <label
-                v-for="option in expiryOptions"
-                :key="option.value"
-                class="btn btn-xs btn-outline h-8"
-                :class="{ 'btn-active': expiresIn === option.value }"
-              >
-                <input
-                  :id="`expiry-${option.value}`"
-                  v-model="expiresIn"
-                  type="radio"
-                  :value="option.value"
-                  class="hidden"
-                />
-                {{ option.label }}
-              </label>
-            </div>
-            <p class="text-xs text-base-content/50 mt-2">过期后仍可猜测，但不计入统计</p>
-          </div>
-        </div>
-
-        <!-- Form Actions -->
-        <div class="p-4 border-t border-base-300 space-y-2 shrink-0">
-          <button
-            class="btn btn-primary w-full gap-2"
-            :disabled="!canSubmit || loading"
-            @click="createPuzzle"
-          >
-            <span v-if="loading" class="loading loading-spinner loading-sm"></span>
-            <i class="i-lucide-check" />
-            生成谜题
-          </button>
-          <button
-            class="btn btn-ghost btn-sm w-full gap-2"
-            :disabled="loading"
-            @click="resetForm"
-          >
-            <i class="i-lucide-refresh-cw" />
-            重置
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Mobile: Vertical Stack Layout -->
-    <div class="lg:hidden">
-      <!-- Canvas Section -->
-      <section class="min-h-[70vh]">
-        <div class="flex items-center justify-between px-4 py-3 bg-base-100/80 backdrop-blur-sm border-b border-base-300">
-          <div class="flex items-center gap-2">
-            <i class="i-lucide-palette text-primary" />
-            <h1 class="font-semibold">绘制区域</h1>
-          </div>
-        </div>
-        <div class="p-3">
-          <div class="tldraw-container  h-[70vh] w-full">
-            <TldrawCanvas ref="tldrawCanvasRef" />
-          </div>
-        </div>
-      </section>
-
-      <!-- Form Section -->
-      <section class="bg-base-100 border-t border-base-300">
-        <div class="container mx-auto px-4 py-6 max-w-lg">
-          <h2 class="text-lg font-bold font-display mb-4">创建新谜题</h2>
-          <p class="text-sm text-base-content/60 mb-6">设置答案和分享选项</p>
-
-          <!-- Error Alert -->
-          <div v-if="error" class="alert alert-error alert-sm py-2 mb-6">
-            <i class="i-lucide-alert-circle text-sm" />
-            <span class="text-sm">{{ error }}</span>
-          </div>
-
-          <div class="space-y-6">
-            <!-- Answer Input -->
-            <div class="form-control">
-              <label class="label py-1">
-                <span class="label-text font-medium">谜底答案</span>
-                <span class="label-text-alt text-error">必填</span>
-              </label>
-              <input
-                v-model="answer"
-                type="text"
-                class="input input-bordered"
-                placeholder="输入正确答案..."
-                maxlength="500"
-              />
-              <label class="label py-1">
-                <span class="label-text-alt">{{ answerLength }} 个字符</span>
-              </label>
-            </div>
-
-            <!-- Hint Input -->
-            <div class="form-control">
-              <label class="label py-1">
-                <span class="label-text">提示语（可选）</span>
-              </label>
-              <textarea
-                v-model="hint"
-                class="textarea textarea-bordered h-24"
-                placeholder="给猜谜者一些提示..."
-                maxlength="500"
-              ></textarea>
-              <label class="label py-1">
-                <span class="label-text-alt">给猜谜者一些提示帮助</span>
-              </label>
-            </div>
-
-            <!-- Case Sensitive Checkbox -->
-            <label class="label cursor-pointer justify-start gap-3 py-2">
-              <input
-                v-model="caseSensitive"
-                type="checkbox"
-                class="checkbox checkbox-primary"
-              />
-              <span class="label-text">区分大小写</span>
-            </label>
-
-            <!-- Public Checkbox -->
-            <label class="label cursor-pointer justify-start gap-3 py-2">
-              <input
-                v-model="isPublic"
-                type="checkbox"
-                class="checkbox checkbox-primary"
-              />
-              <div class="flex flex-col">
-                <span class="label-text">公开到广场</span>
-                <span class="label-text-alt text-xs">取消后将仅在分享链接可见</span>
-              </div>
-            </label>
-
-            <!-- Expiry Options -->
-            <div>
-              <label class="label py-1">
-                <span class="label-text font-medium">过期时间</span>
-              </label>
-              <div class="flex flex-wrap gap-2">
-                <label
-                  v-for="option in expiryOptions"
-                  :key="option.value"
-                  class="btn btn-outline btn-sm"
-                  :class="{ 'btn-active': expiresIn === option.value }"
-                >
-                  <input
-                    :id="`expiry-${option.value}`"
-                    v-model="expiresIn"
-                    type="radio"
-                    :value="option.value"
-                    class="hidden"
-                  />
-                  {{ option.label }}
-                </label>
-              </div>
-              <p class="text-xs text-base-content/50 mt-2">过期后仍可猜测，但不计入统计</p>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex flex-col gap-3 pt-4">
-              <button
-                class="btn btn-primary w-full gap-2"
-                :disabled="!canSubmit || loading"
-                @click="createPuzzle"
-              >
-                <span v-if="loading" class="loading loading-spinner"></span>
-                <i class="i-lucide-check" />
-                生成谜题
-              </button>
-              <button
-                class="btn btn-ghost w-full gap-2"
-                :disabled="loading"
-                @click="resetForm"
-              >
-                <i class="i-lucide-refresh-cw" />
-                重置
-              </button>
-            </div>
-          </div>
-        </div>
+  <div class="studio-page">
+    <div class="studio-layout">
+      <section class="studio-canvas-panel" aria-label="绘图画板"><div class="studio-panel-title"><span><i class="i-lucide-pencil-line" /> 自由绘制</span><small>绘制你的惊世智慧</small></div><div class="studio-canvas"><ExcalidrawCanvas ref="canvasRef" /></div></section>
+      <section class="studio-settings" aria-labelledby="puzzle-settings-title">
+        <h2 id="puzzle-settings-title">给画作一个谜底</h2>
+        <div v-if="error" class="alert alert-error mb-4" role="alert"><i class="i-lucide-alert-circle" /><span>{{ error }}</span></div>
+        <form @submit.prevent="createPuzzle">
+          <div class="form-control"><label class="label" for="puzzle-answer"><span class="label-text">谜底答案 <span class="text-error">*</span></span><span class="label-text-alt">{{ answerLength }}/500</span></label><input id="puzzle-answer" v-model="answer" class="input" placeholder="输入正确答案..." maxlength="500" required><p class="text-xs text-base-content/60 mt-2 mb-0">只有猜对或揭晓后，才能看到答案。</p></div>
+          <div class="form-control"><label class="label" for="puzzle-hint"><span class="label-text">留一点提示</span><span class="label-text-alt">可选</span></label><textarea id="puzzle-hint" v-model="hint" class="textarea h-24" placeholder="比如：一部关于太空的电影…" maxlength="500" /></div>
+          <label class="setting-switch"><span>公开到广场<small>让更多人发现你的脑洞</small></span><input v-model="isPublic" type="checkbox" class="toggle toggle-primary toggle-sm"></label>
+          <label class="setting-switch"><span>区分字母大小写<small>中文答案不受影响</small></span><input v-model="caseSensitive" type="checkbox" class="toggle toggle-primary toggle-sm"></label>
+          <fieldset class="pt-4 border-t border-base-300"><legend class="text-sm pt-3">挑战有效期</legend><div class="expiry-options"><label v-for="option in expiryOptions" :key="option.value" class="expiry-choice"><input v-model="expiresIn" type="radio" name="expiry" :value="option.value">{{ option.label }}</label></div><p class="text-xs text-base-content/60 mt-3 mb-0">过期后仍可猜测，但不计入统计。</p></fieldset>
+          <div class="studio-actions"><button type="submit" class="btn btn-primary" :disabled="!canSubmit || loading"><span v-if="loading" class="loading loading-spinner" /><i v-else class="i-lucide-sparkles" /> {{ loading ? '正在生成…' : '生成谜题' }}<i class="i-lucide-arrow-right" /></button><button type="button" class="btn btn-ghost" :disabled="loading" @click="resetForm"><i class="i-lucide-rotate-ccw" /> 重置</button></div>
+        </form>
       </section>
     </div>
-
-    <!-- Share Modal -->
-    <ShareModal
-      :show="showShareModal"
-      :puzzle-id="createdPuzzleId"
-      @close="closeShareModal"
-    />
+    <ShareModal :show="showShareModal" :puzzle-id="createdPuzzleId" @close="closeShareModal" />
   </div>
 </template>
-
-<style scoped>
-.tldraw-container {
-  border: 1px solid hsl(var(--b3));
-  border-radius: 0.75rem;
-  overflow: hidden;
-  background: hsl(var(--b1));
-}
-</style>

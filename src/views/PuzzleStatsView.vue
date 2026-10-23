@@ -75,13 +75,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container mx-auto px-6 py-10 max-w-4xl">
+  <div class="content-page page-width">
     <!-- Header -->
     <div class="flex items-center gap-3 mb-10">
-      <button class="btn btn-ghost btn-sm btn-circle" @click="router.back()">
+      <button class="btn btn-ghost btn-sm btn-circle" aria-label="返回上一页" @click="router.back()">
         <i class="i-lucide-arrow-left" />
       </button>
-      <h1 class="text-2xl sm:text-3xl font-bold font-display">谜题统计</h1>
+      <div><span class="eyebrow">THE AHA MOMENTS</span><h1 class="text-2xl sm:text-3xl font-bold font-display mt-2 mb-0">那些猜中的瞬间。</h1></div>
     </div>
 
     <!-- Loading -->

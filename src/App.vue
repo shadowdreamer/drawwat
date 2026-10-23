@@ -3,19 +3,15 @@ import { RouterView } from 'vue-router'
 import { onMounted } from 'vue'
 import NavBar from './components/NavBar.vue'
 import { useThemeStore } from './store/theme'
-
 const themeStore = useThemeStore()
-
-onMounted(() => {
-  themeStore.initTheme()
-})
+onMounted(() => themeStore.initTheme())
 </script>
 
 <template>
-  <div class="min-h-screen bg-base-200">
+  <div class="app-shell">
+    <a href="#main-content" class="skip-link">跳到主要内容</a>
+    <div class="ambient-light" aria-hidden="true"><span /><span /><span /></div>
     <NavBar />
-    <main class="min-h-screen">
-      <RouterView />
-    </main>
+    <main id="main-content" tabindex="-1"><RouterView /></main>
   </div>
 </template>
