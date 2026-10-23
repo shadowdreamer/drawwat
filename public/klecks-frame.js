@@ -1,5 +1,9 @@
 // Same-origin iframe: Klecks owns its document and global listeners. Removing the
 // frame tears them down without affecting Vue or the other editor's stylesheet.
+// Klecks tracks only its own saves, so our PSD autosave never clears its unload
+// warning. Suppress that warning inside this frame; pagehide autosave still runs.
+window.addEventListener('beforeunload', event => event.stopImmediatePropagation(), { capture: true })
+
 let editor
 let saveTimer
 let dirty = false
