@@ -199,7 +199,27 @@ h1,h2,h3,p { margin-top: 0; }
 .studio-canvas-panel { border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: var(--surface-solid); box-shadow: var(--shadow-soft); }
 .studio-panel-title { display: flex; align-items: center; justify-content: space-between; padding: 15px 19px; border-bottom: 1px solid var(--line); font-size: 13px; }
 .studio-panel-title span:first-child { display: flex; align-items: center; gap: 8px; }.studio-panel-title small { color: var(--muted); font-size: 11px; }
-.studio-canvas { height: max(580px, calc(100dvh - 242px)); }
+.studio-canvas { position: relative; z-index: 0; height: max(580px, calc(100dvh - 242px)); }
+.studio-panel-title { position: relative; z-index: 2; gap: 10px; }
+.board-picker { position: relative; min-width: 0; }
+.board-picker summary { display: flex; align-items: center; gap: 8px; padding: 7px 9px; margin: -7px -9px; border-radius: 9px; list-style: none; cursor: pointer; transition: background .18s, color .18s; }
+.board-picker summary::-webkit-details-marker { display: none; }
+.board-picker summary:hover, .board-picker[open] summary { color: var(--accent); background: var(--accent-soft); }
+.board-picker summary > span { white-space: nowrap; }
+.board-picker summary b { font-weight: 500; }
+.board-picker-chevron { width: 14px; height: 14px; transition: transform .18s; }
+.board-picker[open] .board-picker-chevron { transform: rotate(180deg); }
+.board-options { position: absolute; top: calc(100% + 15px); left: -6px; width: 320px; max-width: calc(100vw - 52px); padding: 8px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface-solid); box-shadow: 0 14px 38px -12px rgba(46,30,73,.3); }
+.board-options-heading { margin: 3px 8px 8px; color: var(--muted); font-size: 11px; }
+.board-option { width: 100%; display: flex; align-items: center; gap: 10px; padding: 12px 10px; border: 0; border-radius: 11px; background: transparent; color: var(--ink); text-align: left; transition: background .18s; }
+.board-option + .board-option { margin-top: 4px; }
+.board-option:hover, .board-option-active { background: var(--accent-soft); }
+.board-option-icon { flex-shrink: 0; color: var(--accent); }
+.board-option-copy { display: grid; gap: 5px; flex: 1; min-width: 0; }
+.board-option-copy strong { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+.board-option-copy em { padding: 2px 6px; border-radius: 5px; background: var(--surface-solid); color: var(--accent); font-size: 10px; font-style: normal; font-weight: 500; }
+.board-option-copy > span { color: var(--muted); font-size: 11px; line-height: 1.6; }
+.board-option-check { width: 16px; height: 16px; flex-shrink: 0; color: var(--accent); }
 .studio-settings { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow-soft); padding: 24px; }
 .studio-settings h2 { font-size: 17px; margin: 0 0 8px; }.studio-settings > p { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
 .studio-settings .form-control { margin-bottom: 20px; }.studio-settings .label-text { font-size: 13px; }

@@ -111,7 +111,7 @@ async function exportAsImage(): Promise<Blob | null> {
   })
 }
 
-defineExpose({ clearCanvas, exportAsImage })
+defineExpose({ clearCanvas, exportAsImage, saveDraft })
 </script>
 
 <template>

@@ -10,6 +10,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     ExcalidrawCanvas: typeof import('./../src/components/ExcalidrawCanvas.vue')['default']
     GaveUpList: typeof import('./../src/components/GaveUpList.vue')['default']
+    KlecksCanvas: typeof import('./../src/components/KlecksCanvas.vue')['default']
     LoginButton: typeof import('./../src/components/LoginButton.vue')['default']
     NavBar: typeof import('./../src/components/NavBar.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
